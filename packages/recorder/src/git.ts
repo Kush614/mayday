@@ -12,10 +12,18 @@ export function headSha(cwd: string): string {
   }
 }
 
-/** File content at HEAD; "" when the file is new (untracked). */
+/**
+ * File content at HEAD; "" when the file is new (untracked).
+ *
+ * The `./` prefix matters: `git show HEAD:src/items.ts` resolves from the REPO
+ * ROOT, so a target app in a subdirectory silently returns "not found" and every
+ * edit then diffs against an empty baseline — which would attribute every
+ * pre-existing line to the agent and poison the line-history index.
+ * `HEAD:./src/items.ts` resolves relative to cwd.
+ */
 export function fileAtHead(cwd: string, path: string): string {
   try {
-    return git(cwd, ["show", `HEAD:${path}`]);
+    return git(cwd, ["show", `HEAD:./${path}`]);
   } catch {
     return "";
   }

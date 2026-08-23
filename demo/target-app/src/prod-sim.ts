@@ -5,7 +5,7 @@
 import { openDb } from "./db.js";
 import { seedOwnedItems, seedGuestItem } from "./seed.js";
 import { createApp } from "./server.js";
-import { rmSync } from "node:fs";
+import { rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -14,6 +14,32 @@ const dbFile = join(root, "data", "prod-sim.db");
 rmSync(dbFile, { force: true });
 rmSync(`${dbFile}-wal`, { force: true });
 rmSync(`${dbFile}-shm`, { force: true });
+
+const crashFile = join(root, "crash.txt");
+
+/**
+ * Express renders uncaught handler errors as an HTML page. Incident Mode wants
+ * the raw stack, so unwrap it back to plain text.
+ */
+function extractStack(body: string): string {
+  if (!body.trimStart().startsWith("<")) return body.slice(0, 4000);
+  const pre = /<pre>([\s\S]*?)<\/pre>/.exec(body);
+  const inner = pre ? pre[1]! : body;
+  return inner
+    .replace(/<br\s*\/?>/g, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .split("\n")
+    .map((l) => l.replace(/\s+$/, ""))
+    .join("\n")
+    .trim()
+    .slice(0, 4000);
+}
 
 const setup = openDb(dbFile);
 seedOwnedItems(setup);
@@ -37,8 +63,11 @@ const server = app.listen(0, async () => {
       if (res.status >= 500) {
         failed = true;
         console.log(`HTTP ${res.status}`);
+        const trace = extractStack(body);
         console.log("\n--- server error ---");
-        console.log(body.slice(0, 4000));
+        console.log(trace);
+        writeFileSync(crashFile, trace + "\n", "utf8");
+        console.log(`\n(stack trace written to ${crashFile})`);
         break;
       }
       console.log(`HTTP ${res.status}`);

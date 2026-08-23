@@ -54,5 +54,6 @@ describe("items api", () => {
     const dto = toDTO({ id: 1, name: "x", price_cents: 1250, user_id: 7, created_at: "now" });
     expect(dto.price).toBe("$12.50");
     expect(dto.owner).toBe("user-7");
+    expect(dto.owner_code).toBe("U-000007");
   });
 });

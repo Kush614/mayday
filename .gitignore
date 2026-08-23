@@ -7,3 +7,4 @@ traces/
 .DS_Store
 demo/target-app/data/
 __pycache__/
+crash.txt

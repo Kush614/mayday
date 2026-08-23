@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import type { Db } from "./db.js";
+import { ownerCode, ownerLabel } from "./owner.js";
 
 export type ItemRow = {
   id: number;
@@ -14,6 +15,7 @@ export type ItemDTO = {
   name: string;
   price: string;
   owner: string;
+  owner_code: string;
   created_at: string;
 };
 
@@ -22,13 +24,14 @@ export function toDTO(row: ItemRow): ItemDTO {
     id: row.id,
     name: row.name,
     price: `$${(row.price_cents / 100).toFixed(2)}`,
-    owner: `user-${row.user_id}`,
+    owner: ownerLabel(row.user_id),
+    owner_code: ownerCode(row.user_id),
     created_at: row.created_at,
   };
 }
 
 export function listItems(db: Db, _req: Request, res: Response): void {
-  const rows = db.prepare(`SELECT * FROM items ORDER BY id`).all() as ItemRow[];
+  const rows = db.prepare(`SELECT * FROM items WHERE user_id IS NOT NULL ORDER BY id`).all() as ItemRow[];
   res.json({ items: rows.map(toDTO) });
 }
 
