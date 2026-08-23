@@ -15,6 +15,8 @@ export type RecordOptions = {
   traceRoot: string;
   model?: string;
   codexBin?: string;
+  /** codex exec sandbox policy; workspace-write is required for file edits. */
+  sandbox?: "read-only" | "workspace-write" | "danger-full-access";
   extraArgs?: string[];
   onEvent?: (e: TraceEvent) => void;
 };
@@ -101,7 +103,20 @@ export async function record(opts: RecordOptions): Promise<RecordResult> {
   });
 
   const bin = opts.codexBin ?? process.env.AFR_CODEX_BIN ?? "codex";
-  const args = ["exec", "--json", "--cd", targetDir, ...(opts.extraArgs ?? []), opts.task];
+  // `codex exec` sandboxes the agent read-only by default; without workspace-write
+  // it can reason about the task but never edit a file, and the trace has no
+  // file_edit events. Verified against codex-cli 0.149.0 (`codex exec --help`).
+  const sandboxMode = opts.sandbox ?? process.env.AFR_CODEX_SANDBOX ?? "workspace-write";
+  const args = [
+    "exec",
+    "--json",
+    "--cd",
+    targetDir,
+    "--sandbox",
+    sandboxMode,
+    ...(opts.extraArgs ?? []),
+    opts.task,
+  ];
 
   const child = spawn(bin, args, {
     cwd: targetDir,

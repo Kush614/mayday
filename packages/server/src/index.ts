@@ -5,7 +5,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { analyzeIncident, parseFailure, fromGreptileFinding, fetchGreptileFindings, runGreptileReview } from "@afr/incident";
 import { openIndex, indexTrace } from "@afr/enricher";
-import { listTraces, loadTrace, fileAtStep, indexPathFor, REPO_ROOT, TRACE_DIRS } from "./traces.js";
+import { listTraces, loadTrace, fileAtStep, indexPathFor, reconstructFiles, REPO_ROOT, TRACE_DIRS } from "./traces.js";
 
 const app = express();
 app.use(cors());
@@ -146,11 +146,23 @@ app.post("/api/replay", async (req, res) => {
     res.status(503).json({ error: "AFR_MODAL_ENDPOINT is not set", fallback_command: fallbackCommand });
     return;
   }
+
+  const loaded = loadTrace(session_id);
+  if (!loaded) {
+    res.status(404).json({ error: "unknown session_id", fallback_command: fallbackCommand });
+    return;
+  }
+
+  // Reconstruction happens here, where the blobs live — the sandbox just gets
+  // the file contents, so a new trace never needs a Modal redeploy.
+  const files = reconstructFiles(session_id, loaded.events, Number(from_step));
+  const task = loaded.events.find((e) => e.type === "session_start")?.data.task ?? "";
+
   try {
     const upstream = await fetch(endpoint, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ session_id, from_step, correction }),
+      body: JSON.stringify({ session_id, from_step, correction, files, task }),
     });
     const body = await upstream.text();
     res.status(upstream.status).type("application/json").send(body);

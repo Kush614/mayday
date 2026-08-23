@@ -90,6 +90,27 @@ export function fileAtStep(sessionId: string, events: TraceEvent[], path: string
   return getBlob(root, sessionId, blob);
 }
 
+/**
+ * Repo state as of step (beforeStep - 1): for every file the agent edited, the
+ * blob written by its most recent edit before that step. This is what the Modal
+ * sandbox needs to rewind — exact content, no diff replay.
+ */
+export function reconstructFiles(sessionId: string, events: TraceEvent[], beforeStep: number): Record<string, string> {
+  const latest = new Map<string, string>();
+  for (const e of events) {
+    if (e.type !== "file_edit" || e.step >= beforeStep || !e.data.blob) continue;
+    latest.set(e.data.path, e.data.blob);
+  }
+  const root = blobRoot(sessionId);
+  if (!root) return {};
+  const files: Record<string, string> = {};
+  for (const [path, blob] of latest) {
+    const content = getBlob(root, sessionId, blob);
+    if (content !== null) files[path] = content;
+  }
+  return files;
+}
+
 export function indexPathFor(sessionId: string): string {
   const summary = listTraces().find((t) => t.session_id === sessionId);
   const dir = summary ? resolve(summary.path, "..") : TRACE_DIRS[0]!;
