@@ -107,6 +107,12 @@ export async function record(opts: RecordOptions): Promise<RecordResult> {
   // it can reason about the task but never edit a file, and the trace has no
   // file_edit events. Verified against codex-cli 0.149.0 (`codex exec --help`).
   const sandboxMode = opts.sandbox ?? process.env.AFR_CODEX_SANDBOX ?? "workspace-write";
+  // Reasoning summaries are OFF by default: a plain `codex exec --json` run emits
+  // zero `reasoning` items, which would leave the trace with no beliefs to audit
+  // and the enricher with nothing to extract assumptions from. Verified on
+  // codex-cli 0.149.0 — see docs/codex-event-map.md.
+  const reasoningSummary = process.env.AFR_CODEX_REASONING_SUMMARY ?? "detailed";
+  const reasoningEffort = process.env.AFR_CODEX_REASONING_EFFORT ?? "high";
   const args = [
     "exec",
     "--json",
@@ -114,6 +120,10 @@ export async function record(opts: RecordOptions): Promise<RecordResult> {
     targetDir,
     "--sandbox",
     sandboxMode,
+    "-c",
+    `model_reasoning_summary=${reasoningSummary}`,
+    "-c",
+    `model_reasoning_effort=${reasoningEffort}`,
     ...(opts.extraArgs ?? []),
     opts.task,
   ];
@@ -121,7 +131,7 @@ export async function record(opts: RecordOptions): Promise<RecordResult> {
   const child = spawn(bin, args, {
     cwd: targetDir,
     env: process.env,
-    stdio: ["ignore", "pipe", "pipe"],
+    stdio: ["ignore", "pipe", "pipe"], // stdin ignored: piped stdin makes codex wait for EOF
   });
 
   const stderrChunks: string[] = [];
