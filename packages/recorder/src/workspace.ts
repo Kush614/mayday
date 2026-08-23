@@ -27,7 +27,7 @@ function git(cwd: string, args: string[]): void {
   execFileSync("git", args, { cwd, stdio: "ignore" });
 }
 
-export type Workspace = { dir: string; sourceDir: string };
+export type Workspace = { dir: string; sourceDir: string; baselineDir: string };
 
 /**
  * Copies the target app into traces/<session>/workspace, gives it a fresh git
@@ -43,6 +43,18 @@ export function prepareWorkspace(sourceDir: string, traceRoot: string, sessionId
   for (const entry of readdirSync(source)) {
     if (EXCLUDE.has(entry)) continue;
     cpSync(join(source, entry), join(dir, entry), { recursive: true });
+  }
+
+  // A pristine copy kept next to the blobs. Reconstructing "the repo before
+  // step N" needs the app as it was when the session started, and neither the
+  // working tree (the agent's changes are applied back to it) nor the recorded
+  // git sha (it belongs to this throwaway workspace repo) can provide that.
+  const baselineDir = join(resolve(traceRoot), sessionId, "baseline");
+  rmSync(baselineDir, { recursive: true, force: true });
+  mkdirSync(baselineDir, { recursive: true });
+  for (const entry of readdirSync(source)) {
+    if (EXCLUDE.has(entry)) continue;
+    cpSync(join(source, entry), join(baselineDir, entry), { recursive: true });
   }
 
   // npm workspaces hoist dependencies to the repo root; without this the agent
@@ -81,7 +93,7 @@ export function prepareWorkspace(sourceDir: string, traceRoot: string, sessionId
     "initial commit",
   ]);
 
-  return { dir, sourceDir: source };
+  return { dir, sourceDir: source, baselineDir };
 }
 
 /** Copy the agent's changed files back into the real target app. */

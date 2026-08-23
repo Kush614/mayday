@@ -171,7 +171,7 @@ app.post("/api/replay", async (req, res) => {
 
   // Reconstruction happens here, where the blobs live — the sandbox just gets
   // the file contents, so a new trace never needs a Modal redeploy.
-  const files = appFilesAtStep(session_id, loaded.events, Number(from_step), join(REPO_ROOT, "demo", "target-app"));
+  const files = appFilesAtStep(session_id, loaded.events, Number(from_step), join(REPO_ROOT, "demo", "target-app"), REPO_ROOT);
   const task = loaded.events.find((e) => e.type === "session_start")?.data.task ?? "";
 
   try {

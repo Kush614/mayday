@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import type { TraceEvent } from "../types";
 
@@ -51,9 +51,16 @@ export function FilePanel({
     };
   }, [sessionId, selected, step]);
 
+  const scrollerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!focusLine) return;
-    document.getElementById(`line-${focusLine}`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+    const el = document.getElementById(`line-${focusLine}`);
+    const scroller = scrollerRef.current;
+    if (!el || !scroller) return;
+    // Scroll the pane, never the document: scrollIntoView moves ancestors too
+    // and would carry the timeline out of view.
+    scroller.scrollTo({ top: el.offsetTop - scroller.clientHeight / 2, behavior: "smooth" });
   }, [focusLine, content]);
 
   const highlights = selected ? highlightedLines(events, step, selected) : new Set<number>();
@@ -83,7 +90,7 @@ export function FilePanel({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto">
+      <div ref={scrollerRef} className="min-h-0 flex-1 overflow-auto">
         {error && <div className="p-4 text-xs text-muted">{error}</div>}
         {content !== null && (
           <pre className="min-w-full py-2 font-mono text-[11px] leading-[1.55]">

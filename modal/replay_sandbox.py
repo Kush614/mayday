@@ -17,6 +17,7 @@ Sandbox API verified against modal.com/docs/guide/sandboxes (client 1.5.4):
 """
 
 import json
+import shlex
 import time
 from pathlib import Path
 
@@ -45,7 +46,7 @@ app = modal.App(APP_NAME)
 secret = modal.Secret.from_name("openai-secret")
 
 
-def _exec(sb, *cmd, timeout=420):
+def _exec(sb, *cmd, timeout=600):
     """Run a command in the sandbox and collect its output."""
     started = time.time()
     p = sb.exec(*cmd, timeout=timeout)
@@ -74,7 +75,7 @@ def replay(session_id: str, from_step: int, correction: str, files: dict, task: 
         app=app,
         image=sandbox_image,
         secrets=[secret],
-        timeout=1500,
+        timeout=1800,
         cpu=2.0,
         workdir=WORK,
     )
@@ -101,11 +102,27 @@ def replay(session_id: str, from_step: int, correction: str, files: dict, task: 
             f"Constraint learned from incident analysis: {correction}\n\n"
             f"Apply the fix and make sure `npm test` and `npm run prod-sim` both pass."
         )
-        codex_cmd = ["codex", "exec", "--json", "--sandbox", "danger-full-access", "--skip-git-repo-check", "--cd", WORK]
-        if model:
-            codex_cmd += ["--model", model]
-        codex_cmd.append(prompt)
-        agent = _exec(sb, *codex_cmd)
+        # Codex does NOT authenticate from OPENAI_API_KEY alone -- without this the
+        # re-run dies on 401 Unauthorized after five retries (observed). The key
+        # arrives from the Modal secret and is piped in, never passed as an argument.
+        login = _exec(sb, "bash", "-lc", "printenv OPENAI_API_KEY | codex login --with-api-key", timeout=120)
+        steps.append({"step": "codex login", "exit_code": login["exit_code"]})
+        if login["exit_code"] != 0:
+            return {
+                "ok": False,
+                "error": "codex login failed in sandbox; check the openai-secret Modal secret",
+                "detail": (login["stdout"] + login["stderr"])[-500:],
+            }
+
+        # stdin must be closed: with a pipe attached, codex waits for EOF and the
+        # whole re-run burns its timeout without doing anything (observed).
+        model_flag = f" --model {shlex.quote(model)}" if model else ""
+        codex_cmd = (
+            f"codex exec --json --sandbox danger-full-access --skip-git-repo-check"
+            f"{model_flag} --cd {WORK} -c model_reasoning_effort=medium "
+            f"{shlex.quote(prompt)} < /dev/null"
+        )
+        agent = _exec(sb, "bash", "-lc", codex_cmd, timeout=900)
         steps.append({"step": "codex re-run", "exit_code": agent["exit_code"], "duration_s": agent["duration_s"]})
 
         # 4. Did it actually fix production traffic, not just the unit tests?
@@ -113,12 +130,16 @@ def replay(session_id: str, from_step: int, correction: str, files: dict, task: 
         prod = _exec(sb, "bash", "-lc", "npm run prod-sim")
         diff = _exec(sb, "bash", "-lc", "git diff HEAD")
 
+        changed = bool(diff["stdout"].strip())
         return {
             "ok": True,
             "session_id": session_id,
             "from_step": from_step,
             "correction": correction,
-            "tests_passed": tests["exit_code"] == 0 and prod["exit_code"] == 0,
+            "tests_passed": tests["exit_code"] == 0 and prod["exit_code"] == 0 and changed,
+            "tests_green": tests["exit_code"] == 0 and prod["exit_code"] == 0,
+            "changed": changed,
+            "agent_exit_code": agent["exit_code"],
             "test_output": (tests["stdout"] + tests["stderr"])[-3000:]
             + "\n\n--- prod-sim ---\n"
             + (prod["stdout"] + prod["stderr"])[-2000:],

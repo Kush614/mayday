@@ -8,3 +8,4 @@ traces/
 demo/target-app/data/
 __pycache__/
 crash.txt
+*.tsbuildinfo

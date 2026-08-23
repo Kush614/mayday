@@ -83,8 +83,8 @@ export default function App() {
     <div className="flex h-full flex-col">
       <header className="flex items-center gap-4 border-b border-edge bg-panel px-5 py-3">
         <div className="flex items-center gap-2">
-          <div className="grid h-7 w-7 place-items-center rounded bg-danger/20 text-xs font-bold text-danger">AFR</div>
-          <div className="text-sm font-semibold tracking-tight text-slate-100">Agent Flight Recorder</div>
+          <div className="grid h-7 w-7 place-items-center rounded bg-danger/20 text-xs font-bold text-danger">M</div>
+          <div className="text-sm font-semibold tracking-tight text-slate-100">Mayday</div>
         </div>
 
         <select

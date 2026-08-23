@@ -1,4 +1,5 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { join, resolve } from "node:path";
 import { parseTrace, type TraceEvent } from "@mayday/recorder/schema";
 import { getBlob } from "@mayday/recorder";
@@ -69,6 +70,14 @@ export function loadTrace(sessionId: string): { events: TraceEvent[]; summary: T
   return { events: parseTrace(readFileSync(summary.path, "utf8")), summary };
 }
 
+/** Root that holds this session's baseline/ dir, if the capture saved one. */
+export function baselineRoot(sessionId: string): string | null {
+  for (const dir of TRACE_DIRS) {
+    if (existsSync(join(dir, sessionId, "baseline"))) return join(dir, sessionId, "baseline");
+  }
+  return null;
+}
+
 /** Root that holds this session's blobs/ dir (live capture or golden). */
 export function blobRoot(sessionId: string): string | null {
   for (const dir of TRACE_DIRS) {
@@ -87,7 +96,16 @@ export function fileAtStep(sessionId: string, events: TraceEvent[], path: string
     if (e.type !== "file_edit" || e.step > step || e.data.path !== path) continue;
     if (e.data.blob) blob = e.data.blob;
   }
-  if (!blob) return null;
+
+  // Before the first edit there is no blob: show the file as the session found
+  // it, so scrubbing to early steps reads the original rather than an error.
+  if (!blob) {
+    const baseline = baselineRoot(sessionId);
+    if (!baseline) return null;
+    const candidate = join(baseline, path);
+    return existsSync(candidate) ? readFileSync(candidate, "utf8") : null;
+  }
+
   const root = blobRoot(sessionId);
   if (!root) return null;
   return getBlob(root, sessionId, blob);
@@ -116,34 +134,93 @@ export function reconstructFiles(sessionId: string, events: TraceEvent[], before
 
 const SANDBOX_SKIP = new Set(["node_modules", "data", ".git", "dist", "crash.txt", ".DS_Store"]);
 
-/**
- * Every file of the target app as of step (beforeStep - 1): the checked-in app
- * overlaid with the recorder's blobs. The Modal sandbox writes this map straight
- * to disk, so the sandbox image stays generic (Node + Codex only) and a new
- * trace never requires a redeploy.
- */
-export function appFilesAtStep(sessionId: string, events: TraceEvent[], beforeStep: number, appDir: string): Record<string, string> {
-  const files: Record<string, string> = {};
+function walkFiles(dir: string, prefix: string, out: Record<string, string>): void {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (SANDBOX_SKIP.has(entry.name)) continue;
+    const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+    const abs = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      walkFiles(abs, rel, out);
+      continue;
+    }
+    try {
+      out[rel] = readFileSync(abs, "utf8");
+    } catch {
+      // binary or unreadable files are not part of this demo app
+    }
+  }
+}
 
-  const walk = (dir: string, prefix: string): void => {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      if (SANDBOX_SKIP.has(entry.name)) continue;
-      const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
-      const abs = join(dir, entry.name);
-      if (entry.isDirectory()) {
-        walk(abs, rel);
-        continue;
-      }
+/**
+ * The target app as it stood when the session STARTED, read out of git at the
+ * recorded sha. Reading the working tree instead would be wrong: the agent's
+ * changes are applied back to the repo after a capture, so "before step N" would
+ * silently include the very edits we are trying to rewind past.
+ */
+function appFilesAtSessionStart(gitSha: string, appDir: string, repoRoot: string): Record<string, string> | null {
+  if (!gitSha || gitSha === "unknown") return null;
+  const relDir = appDir.startsWith(repoRoot) ? appDir.slice(repoRoot.length + 1) : appDir;
+  try {
+    const listed = execFileSync("git", ["ls-tree", "-r", "--name-only", gitSha, "--", relDir], {
+      cwd: repoRoot,
+      encoding: "utf8",
+      maxBuffer: 32 * 1024 * 1024,
+    })
+      .split("\n")
+      .filter(Boolean);
+    if (listed.length === 0) return null;
+
+    const files: Record<string, string> = {};
+    for (const repoPath of listed) {
+      const rel = repoPath.slice(relDir.length + 1);
+      if (!rel || [...SANDBOX_SKIP].some((skip) => rel === skip || rel.startsWith(`${skip}/`))) continue;
       try {
-        files[rel] = readFileSync(abs, "utf8");
+        files[rel] = execFileSync("git", ["show", `${gitSha}:${repoPath}`], {
+          cwd: repoRoot,
+          encoding: "utf8",
+          maxBuffer: 32 * 1024 * 1024,
+        });
       } catch {
-        // binary or unreadable files are not part of this demo app
+        // deleted or binary; skip
       }
     }
-  };
-  if (existsSync(appDir)) walk(appDir, "");
+    return Object.keys(files).length > 0 ? files : null;
+  } catch {
+    return null;
+  }
+}
 
-  // The agent's own edits win over the checked-in copy.
+/**
+ * Every file of the target app as of step (beforeStep - 1): the app at the
+ * session's starting commit, overlaid with the recorder's blobs. The Modal
+ * sandbox writes this map straight to disk, so the image stays generic and a new
+ * trace never requires a redeploy.
+ */
+export function appFilesAtStep(
+  sessionId: string,
+  events: TraceEvent[],
+  beforeStep: number,
+  appDir: string,
+  repoRoot: string,
+): Record<string, string> {
+  // Preference order: the capture's own pristine baseline, then the session's
+  // git sha, then the working tree (which may already contain the agent's work).
+  let files: Record<string, string> | null = null;
+  const baseline = baselineRoot(sessionId);
+  if (baseline) {
+    files = {};
+    walkFiles(baseline, "", files);
+  }
+  if (!files || Object.keys(files).length === 0) {
+    const gitSha = events.find((e) => e.type === "session_start")?.data.git_sha ?? "";
+    files = appFilesAtSessionStart(gitSha, appDir, repoRoot);
+  }
+  if (!files || Object.keys(files).length === 0) {
+    files = {};
+    if (existsSync(appDir)) walkFiles(appDir, "", files);
+  }
+
+  // The agent's own edits, up to but excluding the step we are rewinding to.
   for (const [path, content] of Object.entries(reconstructFiles(sessionId, events, beforeStep))) {
     files[path] = content;
   }

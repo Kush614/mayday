@@ -51,20 +51,20 @@ export function Timeline({
         <span className="ml-auto text-slate-600">← → step · space play</span>
       </div>
 
-      <div className="flex items-end gap-[3px]">
+      <div className="flex items-end gap-[4px]">
         {events.map((e) => {
           const dimmed = incident !== null && !chain.has(e.step);
           const isFaulty = incident?.step === e.step;
           const isBasis = incident?.basis_step === e.step;
           const risk = e.enrichment?.risk ?? "low";
-          const height = e.type === "file_edit" ? "h-9" : e.type === "thought" ? "h-6" : "h-7";
+          const height = e.type === "file_edit" ? "h-12" : e.type === "thought" ? "h-8" : "h-10";
           return (
             <button
               key={e.step}
               onClick={() => onSelect(e.step)}
               title={`step ${e.step} · ${e.type}${e.enrichment ? ` · risk ${risk}` : ""}`}
               className={[
-                "relative w-[10px] rounded-sm transition-all duration-150",
+                "relative min-w-[8px] max-w-[34px] flex-1 rounded transition-all duration-150",
                 height,
                 TYPE_COLOR[e.type] ?? "bg-slate-500",
                 RISK_RING[risk] ?? "",
