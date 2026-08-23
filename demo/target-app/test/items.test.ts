@@ -30,11 +30,18 @@ beforeEach(() => {
 });
 
 describe("items api", () => {
-  it("lists all items", () => {
+  it("lists the session user's items", () => {
     const { res, state } = fakeRes();
-    listItems(db, {} as Request, res);
-    const body = state.body as { items: unknown[] };
-    expect(body.items).toHaveLength(5);
+    listItems(db, { query: {} } as unknown as Request, res);
+    const body = state.body as { items: { owner: string }[] };
+    expect(body.items).toHaveLength(2);
+    expect(body.items.every((i) => i.owner === "user-1")).toBe(true);
+  });
+
+  it("lists another user's items when asked", () => {
+    const { res, state } = fakeRes();
+    listItems(db, { query: { user_id: "2" } } as unknown as Request, res);
+    expect((state.body as { items: unknown[] }).items).toHaveLength(2);
   });
 
   it("gets one item", () => {

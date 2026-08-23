@@ -5,7 +5,7 @@
 import { openDb } from "./db.js";
 import { seedOwnedItems, seedGuestItem } from "./seed.js";
 import { createApp } from "./server.js";
-import { rmSync, writeFileSync } from "node:fs";
+import { readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -43,6 +43,8 @@ function extractStack(body: string): string {
 
 const setup = openDb(dbFile);
 seedOwnedItems(setup);
+// Production diverged from the app's migrations during the guest-cart rollout.
+setup.exec(readFileSync(join(root, "ops", "production-schema.sql"), "utf8"));
 seedGuestItem(setup);
 setup.close();
 

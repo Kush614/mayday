@@ -32,13 +32,17 @@ const traceRoot = resolve(repoRoot, flags["traces"] ?? "traces");
 console.log(`▶ recording codex session`);
 console.log(`  task:   ${task}`);
 console.log(`  target: ${targetDir}`);
+if (flags["no-isolate"] !== "true") console.log(`  isolated: yes (agent cannot see AFR's repo)`);
 
 const started = Date.now();
 try {
-  const { sessionId, tracePath, events } = await record({
+  const { sessionId, tracePath, events, workspaceDir, applied } = await record({
     task,
     targetDir,
     traceRoot,
+    repoRoot,
+    isolate: flags["no-isolate"] !== "true",
+    apply: flags["no-apply"] !== "true",
     ...(flags["model"] ? { extraArgs: ["--model", flags["model"]] } : {}),
     onEvent: (e) => {
       const label = e.type.padEnd(14);
@@ -66,6 +70,8 @@ try {
   console.log(`\n✔ session ${sessionId} — ${events.length} steps in ${Math.round((Date.now() - started) / 1000)}s`);
   console.log(`  ${Object.entries(counts).map(([k, v]) => `${k}=${v}`).join("  ")}`);
   console.log(`  trace: ${tracePath}`);
+  if (workspaceDir) console.log(`  workspace: ${workspaceDir}`);
+  if (applied.length > 0) console.log(`  applied to target app: ${applied.join(", ")}`);
   console.log(`\n  next: npm run enrich -- ${tracePath}`);
 } catch (err) {
   console.error(`\n✖ ${(err as Error).message}`);

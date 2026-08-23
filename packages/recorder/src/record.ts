@@ -3,11 +3,12 @@ import { createInterface } from "node:readline";
 import { appendFileSync, mkdirSync, readFileSync, existsSync, writeFileSync } from "node:fs";
 import { join, resolve, relative, isAbsolute } from "node:path";
 import { ulid } from "ulid";
-import { TraceEvent, serializeTrace, SCHEMA_VERSION } from "./schema.js";
+import { TraceEvent, serializeTrace, SCHEMA_VERSION, type EventOfType } from "./schema.js";
 import { normalizeCodexEvent, looksLikeTestCommand, testPassed, tail, type NormalizedEvent } from "./codex.js";
 import { unifiedDiff, diffLines, addedRanges } from "./diff.js";
 import { putBlob } from "./blobs.js";
 import { headSha, fileAtHead, workingDiff, filesTouched, isRepo } from "./git.js";
+import { prepareWorkspace, applyWorkspace, type Workspace } from "./workspace.js";
 
 export type RecordOptions = {
   task: string;
@@ -17,11 +18,23 @@ export type RecordOptions = {
   codexBin?: string;
   /** codex exec sandbox policy; workspace-write is required for file edits. */
   sandbox?: "read-only" | "workspace-write" | "danger-full-access";
+  /** Repo root, used to link hoisted node_modules into the workspace. */
+  repoRoot?: string;
+  /** Capture in an isolated copy so the agent cannot read AFR's own repo. */
+  isolate?: boolean;
+  /** Copy the agent's changes back into the real target app afterwards. */
+  apply?: boolean;
   extraArgs?: string[];
   onEvent?: (e: TraceEvent) => void;
 };
 
-export type RecordResult = { sessionId: string; tracePath: string; events: TraceEvent[] };
+export type RecordResult = {
+  sessionId: string;
+  tracePath: string;
+  events: TraceEvent[];
+  workspaceDir: string | null;
+  applied: string[];
+};
 
 class TraceWriter {
   private step = 0;
@@ -81,10 +94,17 @@ function toRelative(targetDir: string, p: string): string {
 }
 
 export async function record(opts: RecordOptions): Promise<RecordResult> {
-  const targetDir = resolve(opts.targetDir);
+  const sourceDir = resolve(opts.targetDir);
   const traceRoot = resolve(opts.traceRoot);
   const sessionId = ulid();
   mkdirSync(join(traceRoot, sessionId), { recursive: true });
+
+  const isolate = opts.isolate ?? true;
+  let workspace: Workspace | null = null;
+  if (isolate) {
+    workspace = prepareWorkspace(sourceDir, traceRoot, sessionId, resolve(opts.repoRoot ?? join(sourceDir, "..", "..")));
+  }
+  const targetDir = workspace ? workspace.dir : sourceDir;
   const tracePath = join(traceRoot, `${sessionId}.jsonl`);
   const rawPath = join(traceRoot, sessionId, "raw.jsonl");
   writeFileSync(tracePath, "", "utf8");
@@ -239,7 +259,15 @@ export async function record(opts: RecordOptions): Promise<RecordResult> {
     duration_s: Math.round((Date.now() - startedAt) / 10) / 100,
   });
 
-  return { sessionId, tracePath, events: writer.events };
+  const applied =
+    workspace && (opts.apply ?? true)
+      ? applyWorkspace(
+          workspace,
+          writer.events.filter((e) => e.type === "file_edit").map((e) => (e as EventOfType<"file_edit">).data.path),
+        )
+      : [];
+
+  return { sessionId, tracePath, events: writer.events, workspaceDir: workspace?.dir ?? null, applied };
 }
 
 export { serializeTrace };

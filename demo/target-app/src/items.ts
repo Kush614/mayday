@@ -30,8 +30,12 @@ export function toDTO(row: ItemRow): ItemDTO {
   };
 }
 
-export function listItems(db: Db, _req: Request, res: Response): void {
-  const rows = db.prepare(`SELECT * FROM items WHERE user_id IS NOT NULL ORDER BY id`).all() as ItemRow[];
+/** Session user for this demo service; real auth lands in a later milestone. */
+const CURRENT_USER_ID = 1;
+
+export function listItems(db: Db, req: Request, res: Response): void {
+  const userId = Number(req.query.user_id ?? CURRENT_USER_ID);
+  const rows = db.prepare(`SELECT * FROM items WHERE user_id = ? ORDER BY id`).all(userId) as ItemRow[];
   res.json({ items: rows.map(toDTO) });
 }
 
