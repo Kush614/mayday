@@ -1,18 +1,18 @@
 import type { TraceEvent, IncidentResult } from "../types";
 
 const TYPE_COLOR: Record<string, string> = {
-  session_start: "bg-slate-500",
-  thought: "bg-sky-400",
-  tool_call: "bg-violet-400",
-  file_edit: "bg-emerald-400",
-  shell_command: "bg-amber-400",
-  test_run: "bg-teal-300",
-  session_end: "bg-slate-500",
+  session_start: "bg-muted",
+  thought: "bg-accent2",
+  tool_call: "bg-accent",
+  file_edit: "bg-ok",
+  shell_command: "bg-warn",
+  test_run: "bg-orange",
+  session_end: "bg-muted",
 };
 
 const RISK_RING: Record<string, string> = {
-  high: "shadow-[0_0_12px_2px_rgba(255,92,92,0.55)]",
-  medium: "shadow-[0_0_10px_1px_rgba(255,176,32,0.45)]",
+  high: "ring-4 ring-danger",
+  medium: "ring-2 ring-warn",
 };
 
 export function Timeline({
@@ -33,9 +33,9 @@ export function Timeline({
   }
 
   return (
-    <div className="border-b border-edge bg-panel px-5 py-3">
-      <div className="mb-2 flex items-center gap-3 text-[11px] uppercase tracking-widest text-muted">
-        <span>timeline</span>
+    <div className="border-b-2 border-edge bg-panel px-5 py-3">
+      <div className="mb-2 flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest text-muted">
+        <span className="font-black">timeline</span>
         <span className="text-slate-600">·</span>
         <span>
           step {current} / {events.length}
@@ -43,12 +43,12 @@ export function Timeline({
         {incident && (
           <>
             <span className="text-slate-600">·</span>
-            <span className="text-danger">
+            <span className="border-2 border-edge bg-danger px-2 py-0.5 font-bold text-white">
               incident chain: step {incident.basis_step ?? "?"} → step {incident.step}
             </span>
           </>
         )}
-        <span className="ml-auto text-slate-600">← → step · space play</span>
+        <span className="ml-auto text-muted">← → step · space play</span>
       </div>
 
       <div className="flex items-end gap-[4px]">
@@ -64,14 +64,14 @@ export function Timeline({
               onClick={() => onSelect(e.step)}
               title={`step ${e.step} · ${e.type}${e.enrichment ? ` · risk ${risk}` : ""}`}
               className={[
-                "relative min-w-[8px] max-w-[34px] flex-1 rounded transition-all duration-150",
+                "relative min-w-[8px] max-w-[34px] flex-1 border-2 border-edge transition-all duration-150",
                 height,
                 TYPE_COLOR[e.type] ?? "bg-slate-500",
                 RISK_RING[risk] ?? "",
-                dimmed ? "opacity-15" : "opacity-90 hover:opacity-100",
-                e.step === current ? "outline outline-2 outline-offset-2 outline-white/80 scale-y-125" : "",
-                isFaulty ? "!bg-danger pulse-danger !opacity-100" : "",
-                isBasis ? "!bg-warn !opacity-100" : "",
+                dimmed ? "opacity-20" : "opacity-100 hover:-translate-y-0.5",
+                e.step === current ? "shadow-hard-sm scale-y-125" : "",
+                isFaulty ? "!bg-danger pulse-danger !opacity-100 scale-y-150" : "",
+                isBasis ? "!bg-warn !opacity-100 scale-y-125 shadow-hard-sm" : "",
               ].join(" ")}
             />
           );

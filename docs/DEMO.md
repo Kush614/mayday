@@ -64,3 +64,27 @@
       actions; Mayday records *beliefs* and links them to outcomes), "does it work with
       other agents?" (schema is agent-agnostic; Codex first), "what's the business?"
       (agent observability — the Datadog moment for agent-written code)
+
+
+## Demo insurance (built, not planned)
+
+Everything expensive is cached on disk and replayed instantly:
+
+```bash
+AFR_OFFLINE=1 npm run dev     # entire demo, zero network
+```
+
+- incident analysis: 35s live → **55ms** cached
+- Modal sandbox re-run: 67s live → **10ms** cached
+- cache lives in `demo/cache/`, refreshed automatically after any successful live run
+- the golden trace, its blobs and its baseline are committed under `demo/traces/`
+
+Captured media (also embedded in the README):
+
+- `docs/media/scrub.gif` — scrubbing the trace
+- `docs/media/incident.gif` — paste a stack trace, get the false assumption
+- `docs/screenshots/{light,dark}-0*.png` — every beat, both themes
+
+If a live act fails on stage, switch to the cached path mid-sentence: the UI marks
+cached results with `from_cache`, and the numbers on screen are the real ones from
+an actual run.

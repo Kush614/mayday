@@ -66,11 +66,11 @@ export function FilePanel({
   const highlights = selected ? highlightedLines(events, step, selected) : new Set<number>();
 
   return (
-    <div className="flex h-full flex-col border-r border-edge bg-panel">
-      <div className="border-b border-edge px-4 py-3">
-        <div className="mb-2 text-[11px] uppercase tracking-widest text-muted">files touched</div>
+    <div className="flex h-full flex-col border-r-2 border-edge bg-panel">
+      <div className="border-b-2 border-edge px-4 py-3">
+        <div className="mb-2 text-[11px] font-black uppercase tracking-widest text-muted">files touched</div>
         <div className="space-y-1">
-          {editedPaths.length === 0 && <div className="text-xs text-slate-600">no file edits in this trace</div>}
+          {editedPaths.length === 0 && <div className="text-xs text-muted">no file edits in this trace</div>}
           {editedPaths.map((p) => {
             const edits = events.filter((e) => e.type === "file_edit" && e.data.path === p).length;
             return (
@@ -78,12 +78,12 @@ export function FilePanel({
                 key={p}
                 onClick={() => setSelected(p)}
                 className={[
-                  "flex w-full items-center justify-between rounded px-2 py-1 text-left text-xs transition",
-                  selected === p ? "bg-accent/15 text-accent" : "text-slate-300 hover:bg-white/5",
+                  "press flex w-full items-center justify-between border-2 px-2 py-1 text-left text-xs font-semibold",
+                  selected === p ? "border-edge bg-accent text-black shadow-hard-sm" : "border-transparent hover:border-edge",
                 ].join(" ")}
               >
                 <span className="truncate font-mono">{p}</span>
-                <span className="ml-2 shrink-0 text-[10px] text-muted">{edits} edit{edits === 1 ? "" : "s"}</span>
+                <span className="ml-2 shrink-0 text-[10px] font-bold text-muted">{edits} edit{edits === 1 ? "" : "s"}</span>
               </button>
             );
           })}
@@ -93,7 +93,7 @@ export function FilePanel({
       <div ref={scrollerRef} className="min-h-0 flex-1 overflow-auto">
         {error && <div className="p-4 text-xs text-muted">{error}</div>}
         {content !== null && (
-          <pre className="min-w-full py-2 font-mono text-[11px] leading-[1.55]">
+          <pre className="min-w-full bg-code py-2 font-mono text-[11px] leading-[1.55]">
             {content.split("\n").map((line, i) => {
               const no = i + 1;
               const added = highlights.has(no);
@@ -104,12 +104,12 @@ export function FilePanel({
                   id={`line-${no}`}
                   className={[
                     "flex px-3",
-                    added ? "bg-emerald-400/12" : "",
-                    focused ? "bg-danger/25 outline outline-1 outline-danger/60" : "",
+                    added ? "bg-ok/25" : "",
+                    focused ? "bg-danger/30 outline-2 outline-danger" : "",
                   ].join(" ")}
                 >
-                  <span className="mr-3 w-8 shrink-0 select-none text-right text-slate-600">{no}</span>
-                  <span className={added ? "text-emerald-200" : "text-slate-300"}>{line || " "}</span>
+                  <span className="mr-3 w-8 shrink-0 select-none text-right text-muted">{no}</span>
+                  <span className={added ? "font-semibold" : ""}>{line || " "}</span>
                 </div>
               );
             })}

@@ -51,15 +51,15 @@ export function IncidentOverlay({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-8 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-8" onClick={onClose}>
       <div
-        className="w-full max-w-3xl rounded-2xl border border-edge bg-panel shadow-2xl"
+        className="w-full max-w-3xl border-4 border-edge bg-ink shadow-hard-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-3 border-b border-edge px-6 py-4">
-          <span className="h-2 w-2 rounded-full bg-danger pulse-danger" />
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-200">incident mode</h2>
-          <button onClick={onClose} className="ml-auto text-xs text-muted hover:text-slate-200">
+        <div className="flex items-center gap-3 border-b-4 border-edge bg-danger px-6 py-4">
+          <span className="h-3 w-3 border-2 border-edge bg-white" />
+          <h2 className="text-sm font-black uppercase tracking-widest text-white">incident mode</h2>
+          <button onClick={onClose} className="ml-auto text-xs font-bold text-white/80 hover:text-white">
             esc
           </button>
         </div>
@@ -71,16 +71,16 @@ export function IncidentOverlay({
             onChange={(e) => setText(e.target.value)}
             placeholder={PLACEHOLDER}
             spellCheck={false}
-            className="h-56 w-full resize-none rounded-lg border border-edge bg-black/40 p-4 font-mono text-[12px] leading-relaxed text-slate-200 outline-none placeholder:text-slate-700 focus:border-accent/50"
+            className="h-56 w-full resize-none border-2 border-edge bg-code p-4 font-mono text-[12px] leading-relaxed text-body shadow-hard-sm outline-none placeholder:text-muted focus:bg-raised"
           />
 
-          {note && <div className="mt-3 text-xs text-accent">{note}</div>}
-          {error && <div className="mt-3 rounded border border-danger/40 bg-danger/10 px-3 py-2 text-xs text-rose-200">{error}</div>}
+          {note && <div className="mt-3 border-2 border-edge bg-accent px-3 py-2 text-xs font-bold text-black">{note}</div>}
+          {error && <div className="mt-3 border-2 border-edge bg-danger px-3 py-2 text-xs font-bold text-white">{error}</div>}
 
           <div className="mt-4 flex items-center gap-3">
             <button
               onClick={importGreptile}
-              className="rounded-lg border border-edge px-3 py-2 text-xs text-slate-300 transition hover:border-accent/50 hover:text-accent"
+              className="press border-2 border-edge bg-accent2 px-3 py-2 text-xs font-bold text-black shadow-hard-sm"
             >
               Import from Greptile PR review
             </button>
@@ -89,7 +89,7 @@ export function IncidentOverlay({
               <button
                 onClick={analyze}
                 disabled={busy || !text.trim()}
-                className="rounded-lg bg-danger px-4 py-2 text-xs font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-40"
+                className="press border-2 border-edge bg-danger px-5 py-2 text-xs font-black uppercase text-white shadow-hard disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {busy ? "analyzing…" : "Analyze"}
               </button>

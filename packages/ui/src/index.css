@@ -1,29 +1,105 @@
 @import "tailwindcss";
 
+/*
+ * Gumroad-flavoured theme: flat surfaces, heavy black borders, hard offset
+ * shadows, saturated accents. Light is the default; dark is a full inversion
+ * driven by [data-theme="dark"] on <html>, so every token below has a twin.
+ */
 @theme {
-  --color-ink: #07090d;
-  --color-panel: #0d1117;
-  --color-edge: #1c2333;
-  --color-muted: #7d8aa3;
-  --color-accent: #4da3ff;
-  --color-danger: #ff5c5c;
-  --color-warn: #ffb020;
-  --color-ok: #35d07f;
+  --color-ink: #ffffff;        /* page background */
+  --color-panel: #f4f4f0;      /* raised surface */
+  --color-raised: #ffffff;     /* cards on top of panels */
+  --color-edge: #000000;       /* borders + hard shadows */
+  --color-body: #000000;       /* primary text */
+  --color-muted: #5c5c5c;      /* secondary text */
+  --color-accent: #ff90e8;     /* gumroad pink */
+  --color-accent2: #90a8ed;    /* lilac */
+  --color-warn: #ffc900;       /* yellow */
+  --color-danger: #dc341e;     /* red */
+  --color-ok: #23a094;         /* teal */
+  --color-orange: #ff7051;
+  --color-code: #f4f4f0;
 }
 
-html, body, #root { height: 100%; }
+:root[data-theme="dark"] {
+  --color-ink: #0d0d0d;
+  --color-panel: #161616;
+  --color-raised: #1f1f1f;
+  --color-edge: #ffffff;
+  --color-body: #f4f4f0;
+  --color-muted: #9a9a9a;
+  --color-accent: #ff90e8;
+  --color-accent2: #90a8ed;
+  --color-warn: #ffc900;
+  --color-danger: #ff6552;
+  --color-ok: #2fd3c3;
+  --color-orange: #ff7051;
+  --color-code: #0a0a0a;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   background: var(--color-ink);
-  color: #e6edf7;
-  font-family: ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+  color: var(--color-body);
+  font-family: ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-weight: 500;
   overflow: hidden;
 }
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: #1e2636; border-radius: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
+
+/* Hard offset shadow — the single most Gumroad-ish signal. */
+.shadow-hard {
+  box-shadow: 4px 4px 0 0 var(--color-edge);
+}
+.shadow-hard-sm {
+  box-shadow: 2px 2px 0 0 var(--color-edge);
+}
+.shadow-hard-lg {
+  box-shadow: 8px 8px 0 0 var(--color-edge);
+}
+
+/* Buttons press into their own shadow instead of floating. */
+.press {
+  transition:
+    transform 90ms ease,
+    box-shadow 90ms ease,
+    background-color 90ms ease;
+}
+.press:hover:not(:disabled) {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 0 var(--color-edge);
+}
+.press:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 0 var(--color-edge);
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-edge);
+  border: 3px solid var(--color-panel);
+  border-radius: 0;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-panel);
+}
 
 @keyframes pulse-danger {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 92, 92, 0.55); }
-  50%      { box-shadow: 0 0 0 7px rgba(255, 92, 92, 0); }
+  0%,
+  100% {
+    box-shadow: 4px 4px 0 0 var(--color-edge);
+  }
+  50% {
+    box-shadow: 4px 4px 0 0 var(--color-danger);
+  }
 }
-.pulse-danger { animation: pulse-danger 1.8s ease-out infinite; }
+.pulse-danger {
+  animation: pulse-danger 1.6s ease-in-out infinite;
+}

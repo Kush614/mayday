@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { analyzeIncident, parseFailure, fromGreptileFinding, fetchGreptileFindings, runGreptileReview } from "@mayday/incident";
 import { openIndex, indexTrace } from "@mayday/enricher";
 import { listTraces, loadTrace, fileAtStep, indexPathFor, appFilesAtStep, REPO_ROOT, TRACE_DIRS } from "./traces.js";
+import * as cache from "./cache.js";
 
 const app = express();
 app.use(cors());
@@ -17,6 +18,8 @@ app.get("/api/health", (_req, res) => {
     traces: listTraces().length,
     openai_key: Boolean(process.env.OPENAI_API_KEY),
     modal_endpoint: Boolean(process.env.AFR_MODAL_ENDPOINT),
+    offline: cache.isOffline(),
+    cached: cache.listCached(REPO_ROOT).length,
   });
 });
 
@@ -89,9 +92,25 @@ app.post("/api/incident", async (req, res) => {
     res.status(404).json({ error: "unknown session_id" });
     return;
   }
+
+  const failureText = finding ? JSON.stringify(finding) : String(text ?? "");
+  const key = cache.incidentKey(session_id, failureText);
+
+  const serveCached = (reason: string): boolean => {
+    const hit =
+      cache.get<Record<string, unknown>>(REPO_ROOT, "incident", key) ??
+      cache.getNearest<Record<string, unknown>>(REPO_ROOT, "incident", session_id);
+    if (!hit) return false;
+    res.json({ ...hit, from_cache: true, cache_reason: reason });
+    return true;
+  };
+
+  if (cache.isOffline() && serveCached("offline mode")) return;
+
   try {
-    const artifact = finding ? fromGreptileFinding(finding) : parseFailure(String(text ?? ""));
+    const artifact = finding ? fromGreptileFinding(finding) : parseFailure(failureText);
     if (artifact.frames.length === 0) {
+      if (serveCached("no frames parsed")) return;
       res.status(400).json({ error: "no file:line references found in that failure text" });
       return;
     }
@@ -101,8 +120,10 @@ app.post("/api/incident", async (req, res) => {
       indexPath: ensureIndexed(session_id, loaded.events, loaded.summary.path),
       ...(model ? { model } : {}),
     });
+    cache.put(REPO_ROOT, "incident", key, result);
     res.json(result);
   } catch (err) {
+    if (serveCached((err as Error).message)) return;
     res.status(500).json({ error: (err as Error).message });
   }
 });
@@ -153,12 +174,26 @@ app.get("/api/greptile", async (req, res) => {
   });
 });
 
-/** Sandboxed re-run. Fail soft: hand back the exact local command if Modal is down. */
+/** Sandboxed re-run. Falls back to the cached run, then to the local command. */
 app.post("/api/replay", async (req, res) => {
   const { session_id, from_step, correction } = req.body ?? {};
   const fallbackCommand = `modal run modal/replay_sandbox.py --trace ${session_id} --from-step ${from_step}`;
+  const key = cache.replayKey(String(session_id), Number(from_step));
+
+  const serveCached = (reason: string): boolean => {
+    const hit =
+      cache.get<Record<string, unknown>>(REPO_ROOT, "replay", key) ??
+      cache.getNearest<Record<string, unknown>>(REPO_ROOT, "replay", String(session_id));
+    if (!hit) return false;
+    res.json({ ...hit, from_cache: true, cache_reason: reason });
+    return true;
+  };
+
+  if (cache.isOffline() && serveCached("offline mode")) return;
+
   const endpoint = process.env.AFR_MODAL_ENDPOINT;
   if (!endpoint) {
+    if (serveCached("AFR_MODAL_ENDPOINT is not set")) return;
     res.status(503).json({ error: "AFR_MODAL_ENDPOINT is not set", fallback_command: fallbackCommand });
     return;
   }
@@ -181,8 +216,16 @@ app.post("/api/replay", async (req, res) => {
       body: JSON.stringify({ session_id, from_step, correction, files, task }),
     });
     const body = await upstream.text();
+    const parsed = body ? JSON.parse(body) : {};
+    if (upstream.ok && parsed?.ok) {
+      cache.put(REPO_ROOT, "replay", key, parsed);
+      res.json(parsed);
+      return;
+    }
+    if (serveCached(String(parsed?.error ?? `HTTP ${upstream.status}`))) return;
     res.status(upstream.status).type("application/json").send(body);
   } catch (err) {
+    if (serveCached((err as Error).message)) return;
     res.status(502).json({ error: (err as Error).message, fallback_command: fallbackCommand });
   }
 });

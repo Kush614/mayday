@@ -26,7 +26,7 @@ pins `python_version="3.11"`, so nothing depends on the system interpreter.
 
 | Tool | Version | Auth | Verified by |
 |---|---|---|---|
-| Codex CLI (`@openai/codex`) | 0.149.0 | ❌ `codex login status` → *Not logged in* | `codex --version`, `codex exec --help` |
+| Codex CLI (`@openai/codex`) | 0.149.0 | ✅ API key auth (`codex login --with-api-key`) | live capture: 24-step golden trace |
 | Modal | client 1.5.4 | ✅ profile `kushise27`, token in `~/.modal.toml` | `modal run modal/hello.py` → *modal ok on x86_64* |
 | Greptile CLI (`greptile`) | 3.4.1 | ✅ `kushise27@gmail.com` (API key), org `Kush` | `greptile whoami` |
 | claude-mem | 13.15.3 | ✅ uses Claude Code's own auth | worker running, PID checked via `claude-mem status` |
@@ -76,3 +76,39 @@ saved finding remain as fallbacks. See `docs/greptile-notes.md`.
 - `.env` is gitignored; only `.env.example` (no values) is committed.
 - Modal auth lives in `~/.modal.toml`; Codex auth in `$CODEX_HOME` (default `~/.codex`).
 - Nothing credential-adjacent is written to any file in this repo.
+
+
+## Milestones
+
+| | Status |
+|---|---|
+| M1 recorder produces a valid trace | ✅ 24 steps on the demo app |
+| M2 enrichment adds assumptions with basis_step | ✅ 117 assumptions, 0 failures, $0.08 |
+| M3 UI scrubs the golden trace | ✅ verified headlessly, 7/7 (`scripts/ui-check.ts`) |
+| M4 incident: stack trace → step + assumption | ✅ step 12, basis 9, high confidence |
+| M5 Modal re-run returns passing tests | ✅ 67s, agent exit 0, tests + prod-sim green |
+| M6 Greptile finding → incident path | ⚠️ CLI review works and found real P1s; the finding→step mapping still needs one run against a finding on agent-written lines |
+| M7 demo rehearsed 3× | ❌ needs a human — see below |
+
+## Demo insurance
+
+Every expensive result is cached in `demo/cache/` and replayed from disk:
+
+- `AFR_OFFLINE=1 npm run dev` runs the whole demo with **no network at all**
+- incident analysis 35s → 55ms, sandbox re-run 67s → 10ms
+- the cache is populated automatically after each successful live run
+
+## Rehearsals — needs you
+
+M7 asks for three full run-throughs of `docs/DEMO.md` against the golden trace.
+Suggested: two on Saturday evening, one Sunday morning before the freeze, with the
+network off for the first two (Act 4 runs from cache). Tell me when you want to
+schedule them and I will prepare a timed script and a checklist.
+
+## Public endpoint note
+
+`AFR_MODAL_ENDPOINT` points at a deployed Modal web endpoint. It is **publicly
+callable** — no auth in front of it, per the hackathon scope guard. It only accepts
+a file map plus a task string and runs them in an isolated sandbox, but treat the
+URL as semi-secret and stop the app after the hackathon:
+`modal app stop afr-replay`.

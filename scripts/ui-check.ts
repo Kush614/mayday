@@ -74,7 +74,7 @@ record("incident analysis renders forensics card", verdict > 0);
 await page.screenshot({ path: `${OUT}/05-forensics.png`, fullPage: false });
 
 // 6. Timeline dims to the incident chain.
-const dimmed = await page.locator("button[title^='step'].opacity-15").count();
+const dimmed = await page.locator("button[title^='step'].opacity-20").count();
 record("timeline dims to the incident chain", dimmed > 5, `${dimmed} steps dimmed`);
 await page.screenshot({ path: `${OUT}/06-chain.png` });
 
