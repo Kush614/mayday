@@ -1,0 +1,11 @@
+import { chromium } from "playwright";
+const browser = await chromium.launch();
+const page = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
+await page.goto("http://localhost:5173", { waitUntil: "networkidle" });
+await page.waitForTimeout(500);
+await page.locator("button:has-text('demo')").first().click();
+await page.waitForTimeout(1200);
+await page.locator("text=/what the agent believed/i").first().scrollIntoViewIfNeeded();
+await page.waitForTimeout(400);
+await page.screenshot({ path: "docs/screenshots/light-07-demo-before-after.png" });
+await browser.close();

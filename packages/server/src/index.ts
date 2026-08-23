@@ -128,6 +128,34 @@ app.post("/api/incident", async (req, res) => {
   }
 });
 
+/**
+ * The already-known incident for a session, with no analysis and no LLM call:
+ * the demo cache first, then the committed <session>.incident.json beside the
+ * golden trace. Used by the Demo tab to show the real before/after belief.
+ */
+app.get("/api/incident/cached", (req, res) => {
+  const sessionId = String(req.query.session_id ?? "");
+  if (!sessionId) {
+    res.status(400).json({ error: "session_id is required" });
+    return;
+  }
+
+  const hit = cache.getNearest<Record<string, unknown>>(REPO_ROOT, "incident", sessionId);
+  if (hit) {
+    res.json({ ...hit, source: "cache" });
+    return;
+  }
+
+  for (const dir of TRACE_DIRS) {
+    const file = join(dir, `${sessionId}.incident.json`);
+    if (existsSync(file)) {
+      res.json({ ...JSON.parse(readFileSync(file, "utf8")), source: "committed" });
+      return;
+    }
+  }
+  res.status(404).json({ error: "no incident recorded for this session yet" });
+});
+
 app.get("/api/greptile", async (req, res) => {
   const pr = Number(req.query.pr ?? 0);
   const repo = String(req.query.repo ?? process.env.GITHUB_REPO ?? "");

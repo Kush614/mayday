@@ -22,7 +22,9 @@
     "incident": "npm -w @mayday/incident run start --",
     "prod-sim": "npm -w @mayday/target-app run prod-sim",
     "test": "vitest run",
-    "typecheck": "tsc -b packages/recorder packages/enricher packages/incident packages/server"
+    "typecheck": "tsc -b packages/recorder packages/enricher packages/incident packages/server",
+    "rehearse": "tsx scripts/rehearse.ts",
+    "ui-check": "tsx scripts/ui-check.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

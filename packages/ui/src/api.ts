@@ -22,6 +22,11 @@ export const api = {
       json<{ path: string; step: number; content: string }>(r),
     ),
 
+  cachedIncident: (sessionId: string) =>
+    fetch(`/api/incident/cached?session_id=${encodeURIComponent(sessionId)}`).then((r) =>
+      json<IncidentResult & { source: string }>(r),
+    ),
+
   incident: (body: { session_id: string; text?: string; finding?: unknown }) =>
     fetch("/api/incident", {
       method: "POST",

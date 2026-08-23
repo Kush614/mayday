@@ -110,6 +110,15 @@ the app, so the presenter never has to remember where to click.
 
 ![Demo guide](docs/screenshots/light-06-demo-guide.png)
 
+The Demo tab also shows the **real** before/after belief, fetched from the recorded incident rather
+than hardcoded, so the presenter can read both lines straight off the script:
+
+![Before and after belief on the demo page](docs/screenshots/light-07-demo-before-after.png)
+
+```bash
+npm run rehearse    # walks every beat headlessly against a cold, offline stack
+```
+
 ---
 
 ## Architecture

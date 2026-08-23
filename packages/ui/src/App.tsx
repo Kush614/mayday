@@ -175,6 +175,7 @@ export default function App() {
         <About />
       ) : tab === "demo" ? (
         <DemoGuide
+          sessionId={sessionId}
           onJumpToStep={(step) => {
             setTab("replay");
             goto(step);

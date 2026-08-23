@@ -1,6 +1,8 @@
 # Mayday — 3-minute video script
 
-Run with `AFR_OFFLINE=1 npm run dev`. Every result on screen is real, served from
+Run with `AFR_OFFLINE=1 npm run dev`. The **Demo tab inside the app** carries this
+same script with copy buttons and one-click actions, plus the live before/after belief.
+Verify the whole run with `npm run rehearse`. Every result on screen is real, served from
 `demo/cache/`. Nothing depends on the network.
 
 ---

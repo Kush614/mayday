@@ -5,7 +5,9 @@
  * the app itself: copy the crash to the clipboard, jump the scrubber to a step,
  * or open Incident Mode with the stack trace already pasted.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { api } from "../api";
+import type { IncidentResult } from "../types";
 
 export const CRASH_TEXT = `TypeError: Cannot read properties of null (reading 'toString')
     at ownerCode (/app/demo/target-app/src/owner.ts:6:22)
@@ -93,13 +95,69 @@ function Beat({
   );
 }
 
+/** The real before/after belief, read from the recorded incident — never hardcoded. */
+function BeliefPair({ incident }: { incident: IncidentResult | null }) {
+  if (!incident?.assumption) {
+    return (
+      <div className="border-2 border-edge bg-panel px-3 py-2 text-xs font-bold">
+        Run the incident once and the real before/after belief appears here.
+      </div>
+    );
+  }
+  return (
+    <div>
+      <div className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-muted">
+        what lands on screen — read these two lines out loud
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="border-2 border-edge bg-danger px-3 py-2 shadow-hard-sm">
+          <div className="flex items-center gap-2">
+            <span className="border-2 border-edge bg-white px-1.5 text-[10px] font-black text-danger">BEFORE</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-white/80">what the agent believed</span>
+          </div>
+          <div className="mt-1.5 text-sm font-bold text-white line-through decoration-white/50 decoration-2">
+            {incident.assumption.claim}
+          </div>
+          <div className="mt-1.5 text-[10px] font-bold text-white/75">formed at step {incident.basis_step ?? "?"}</div>
+        </div>
+        <div className="border-2 border-edge bg-ok px-3 py-2 shadow-hard-sm">
+          <div className="flex items-center gap-2">
+            <span className="border-2 border-edge bg-white px-1.5 text-[10px] font-black text-black">AFTER</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-black/70">what is actually true</span>
+          </div>
+          <div className="mt-1.5 text-sm font-bold text-black">
+            {incident.corrected_belief?.trim() || incident.correction.split(/(?<=\.)\s/)[0]}
+          </div>
+          <div className="mt-1.5 text-[10px] font-bold text-black/70">verified by the sandbox re-run</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function DemoGuide({
+  sessionId,
   onJumpToStep,
   onOpenIncident,
 }: {
+  sessionId: string | null;
   onJumpToStep: (step: number) => void;
   onOpenIncident: (prefill: string) => void;
 }) {
+  const [incident, setIncident] = useState<IncidentResult | null>(null);
+
+  useEffect(() => {
+    if (!sessionId) return;
+    let cancelled = false;
+    api
+      .cachedIncident(sessionId)
+      .then((r) => !cancelled && setIncident(r))
+      .catch(() => !cancelled && setIncident(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId]);
+
   return (
     <div className="min-h-0 flex-1 overflow-auto bg-ink">
       <div className="mx-auto max-w-4xl px-8 py-10">
@@ -192,6 +250,7 @@ export function DemoGuide({
               <div className="border-2 border-edge bg-panel px-3 py-2 text-xs font-bold">
                 ⏸ After ANALYZE, stop talking for two seconds. The dimming timeline is the demo.
               </div>
+              <BeliefPair incident={incident} />
               <div className="border-2 border-edge bg-accent px-3 py-2 text-xs font-bold text-black">
                 👀 Point at the <strong>BEFORE / AFTER</strong> pair in the forensics card. Read the struck-through
                 belief, then the green one. That contrast is the whole product in two lines.

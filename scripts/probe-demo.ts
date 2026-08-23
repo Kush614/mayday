@@ -1,0 +1,15 @@
+import { chromium } from "playwright";
+const browser = await chromium.launch();
+const page = await browser.newPage({ viewport: { width: 1500, height: 1000 } });
+const reqs: string[] = [];
+page.on("response", (r) => { if (r.url().includes("/api/incident/cached")) reqs.push(`${r.status()} ${r.url()}`); });
+page.on("pageerror", (e) => console.log("PAGE ERROR:", String(e).slice(0, 200)));
+await page.goto("http://localhost:5173", { waitUntil: "networkidle" });
+await page.waitForTimeout(600);
+await page.locator("button:has-text('demo')").first().click();
+await page.waitForTimeout(1500);
+console.log("cached-incident requests:", reqs.length ? reqs : "NONE MADE");
+console.log("fallback text present   :", await page.locator("text=/Run the incident once/i").count());
+console.log("BEFORE panel present    :", await page.locator("text=/what the agent believed/i").count());
+console.log("beat headers            :", await page.locator("text=/^say$/i").count());
+await browser.close();
