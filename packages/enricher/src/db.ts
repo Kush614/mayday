@@ -5,7 +5,7 @@
 import Database from "better-sqlite3";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
-import type { TraceEvent } from "@afr/recorder/schema";
+import type { TraceEvent } from "@mayday/recorder/schema";
 import { buildLineOrigin } from "./line-history.js";
 
 export type Db = Database.Database;

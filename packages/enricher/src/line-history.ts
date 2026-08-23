@@ -7,8 +7,8 @@
  *
  * Owner 0 means "existed before the session" — not attributable to the agent.
  */
-import { parseUnifiedDiff } from "@afr/recorder";
-import type { TraceEvent } from "@afr/recorder/schema";
+import { parseUnifiedDiff } from "@mayday/recorder";
+import type { TraceEvent } from "@mayday/recorder/schema";
 
 export const PRE_EXISTING = 0;
 

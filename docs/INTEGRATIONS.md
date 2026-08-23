@@ -7,7 +7,7 @@ Judges reward integrations that are load-bearing; here's how each one is.
 
 Codex must play a "meaningful role in building your project." We use it three ways:
 
-1. **The recorded subject.** AFR records Codex CLI sessions — Codex is literally the
+1. **The recorded subject.** Mayday records Codex CLI sessions — Codex is literally the
    star of the product demo (`codex exec --json` on the target app).
 2. **The re-run engine.** Incident Mode's fix re-runs Codex inside a Modal sandbox
    with the corrected assumption injected into the task.
@@ -42,7 +42,7 @@ Setup:
 - Verify current Sandbox/API syntax against modal.com/docs/guide at build time —
   the SDK moves fast; don't code it from memory.
 
-Demo line: "Fix is one click: AFR reconstructs the exact repo state before step 14,
+Demo line: "Fix is one click: Mayday reconstructs the exact repo state before step 14,
 re-runs Codex with the corrected assumption in a Modal sandbox, and runs the tests —
 green in ~60 seconds."
 
@@ -60,7 +60,7 @@ to Claude Code/Codex — which we actually use mid-hackathon.
 *pre-production incident artifact*: `{path, line_range, comment}`. Incident Mode
 accepts it directly — "Import from Greptile PR review" maps the finding through the
 line_origin index to the agent step that wrote those lines and surfaces the
-assumption behind them. Story: *Greptile tells you WHAT is wrong with the diff; AFR
+assumption behind them. Story: *Greptile tells you WHAT is wrong with the diff; Mayday
 tells you WHY the agent wrote it.* Implementation: fetch the PR review comments
 (Greptile posts as PR comments — GitHub API is enough; check greptile.com/docs for a
 native API if time permits), normalize to the incident artifact shape. If the API
@@ -80,7 +80,7 @@ Role: **build-time memory** for Claude Code across the weekend's many sessions.
 - Its MCP search tools ("what did we decide about the trace schema?") replace
   scrolling old sessions.
 - Pitch garnish (optional, honest): claude-mem is itself proof of the thesis — agent
-  work needs durable, queryable records of what the agent did and why. AFR is that
+  work needs durable, queryable records of what the agent did and why. Mayday is that
   idea aimed at forensics.
 
 ## 5. Stripe — intentionally unused

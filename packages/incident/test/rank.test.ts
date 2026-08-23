@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { unifiedDiff, diffLines, addedRanges } from "@afr/recorder";
-import type { TraceEvent } from "@afr/recorder/schema";
-import { openIndex, indexTrace, type Db } from "@afr/enricher";
+import { unifiedDiff, diffLines, addedRanges } from "@mayday/recorder";
+import type { TraceEvent } from "@mayday/recorder/schema";
+import { openIndex, indexTrace, type Db } from "@mayday/enricher";
 import { rankCandidates } from "../src/analyze.js";
 import { parseFailure } from "../src/parse-failure.js";
 

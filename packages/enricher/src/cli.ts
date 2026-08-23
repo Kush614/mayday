@@ -2,7 +2,7 @@
 import "dotenv/config";
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname, join, basename } from "node:path";
-import { parseTrace, serializeTrace } from "@afr/recorder/schema";
+import { parseTrace, serializeTrace } from "@mayday/recorder/schema";
 import { enrichTrace } from "./enrich.js";
 import { costSoFar } from "./llm.js";
 import { openIndex, indexTrace } from "./db.js";

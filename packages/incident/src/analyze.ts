@@ -3,8 +3,8 @@
  * assumption behind the top step.
  */
 import { z } from "zod";
-import type { TraceEvent, Assumption } from "@afr/recorder/schema";
-import { llmJson, defaultModel, openIndex, lookupLine, resolvePath, summarizeEvent, describeStep, type Db } from "@afr/enricher";
+import type { TraceEvent, Assumption } from "@mayday/recorder/schema";
+import { llmJson, defaultModel, openIndex, lookupLine, resolvePath, summarizeEvent, describeStep, type Db } from "@mayday/enricher";
 import type { FailureArtifact } from "./parse-failure.js";
 
 export type Candidate = {

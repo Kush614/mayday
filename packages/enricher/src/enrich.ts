@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import pLimit from "p-limit";
 import { z } from "zod";
-import type { TraceEvent, Enrichment } from "@afr/recorder/schema";
+import type { TraceEvent, Enrichment } from "@mayday/recorder/schema";
 import { llmJson, defaultModel } from "./llm.js";
 import { summarizeEvent, describeStep, windowBefore } from "./context.js";
 

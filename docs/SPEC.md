@@ -1,4 +1,4 @@
-# Agent Flight Recorder — Specification
+# Mayday — Specification
 
 Version 1.0 · YC Fast Hackathon · Aug 2026
 
@@ -12,14 +12,14 @@ debugging for agent decisions.
 
 ## 2. Product
 
-AFR is three things layered on one artifact (the trace):
+Mayday is three things layered on one artifact (the trace):
 
 1. **Recorder** — wraps Codex CLI, captures a structured trace of an entire agent
    session: task, reasoning, tool calls, file edits, shell commands, final diff.
 2. **Enricher** — a post-session pass that annotates each decision point with intent,
    rejected alternatives, and — critically — explicit *assumptions* the step made.
 3. **Replay + Incident Mode** — a timeline UI to scrub the session; paste a failure
-   (stack trace, failing test output, or a Greptile review finding) and AFR walks the
+   (stack trace, failing test output, or a Greptile review finding) and Mayday walks the
    trace backward to the step and false assumption that introduced it, then offers
    "re-run from step N with corrected assumption" in a Modal sandbox.
 

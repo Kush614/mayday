@@ -1,9 +1,12 @@
 {
-  "name": "@afr/recorder",
+  "name": "@mayday/recorder",
   "version": "0.1.0",
   "type": "module",
   "main": "src/index.ts",
-  "exports": { ".": "./src/index.ts", "./schema": "./src/schema.ts" },
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts"
+  },
   "scripts": {
     "start": "tsx src/cli.ts",
     "build": "tsc -p tsconfig.json"

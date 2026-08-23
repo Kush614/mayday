@@ -1,16 +1,23 @@
 {
-  "name": "@afr/enricher",
+  "name": "@mayday/enricher",
   "version": "0.1.0",
   "type": "module",
   "main": "src/index.ts",
-  "exports": { ".": "./src/index.ts" },
-  "scripts": { "start": "tsx src/cli.ts", "build": "tsc -p tsconfig.json" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "start": "tsx src/cli.ts",
+    "build": "tsc -p tsconfig.json"
+  },
   "dependencies": {
-    "@afr/recorder": "*",
+    "@mayday/recorder": "*",
     "better-sqlite3": "^11.7.0",
     "dotenv": "^16.4.7",
     "p-limit": "^6.2.0",
     "zod": "^3.24.1"
   },
-  "devDependencies": { "@types/better-sqlite3": "^7.6.12" }
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12"
+  }
 }

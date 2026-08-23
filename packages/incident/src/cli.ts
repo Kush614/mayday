@@ -2,8 +2,8 @@
 import "dotenv/config";
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname, join } from "node:path";
-import { parseTrace } from "@afr/recorder/schema";
-import { costSoFar } from "@afr/enricher";
+import { parseTrace } from "@mayday/recorder/schema";
+import { costSoFar } from "@mayday/enricher";
 import { parseFailure, fromGreptileFinding } from "./parse-failure.js";
 import { analyzeIncident } from "./analyze.js";
 import { fetchGreptileFindings, runGreptileReview } from "./greptile.js";

@@ -1,5 +1,5 @@
 {
-  "name": "agent-flight-recorder",
+  "name": "mayday",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -16,11 +16,11 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
-    "dev": "concurrently -n api,ui -c cyan,magenta \"npm -w @afr/server run dev\" \"npm -w @afr/ui run dev\"",
-    "record": "npm -w @afr/recorder run start --",
-    "enrich": "npm -w @afr/enricher run start --",
-    "incident": "npm -w @afr/incident run start --",
-    "prod-sim": "npm -w @afr/target-app run prod-sim",
+    "dev": "concurrently -n api,ui -c cyan,magenta \"npm -w @mayday/server run dev\" \"npm -w @mayday/ui run dev\"",
+    "record": "npm -w @mayday/recorder run start --",
+    "enrich": "npm -w @mayday/enricher run start --",
+    "incident": "npm -w @mayday/incident run start --",
+    "prod-sim": "npm -w @mayday/target-app run prod-sim",
     "test": "vitest run",
     "typecheck": "tsc -b packages/recorder packages/enricher packages/incident packages/server"
   },

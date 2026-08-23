@@ -15,7 +15,7 @@ greptile review --json          # reviews the CURRENT BRANCH, no PR, no GITHUB_T
 ```
 
 That removes the demo's slowest dependency (open a PR → wait ~3 min → poll the GitHub
-API). AFR now treats the CLI as the primary Greptile source.
+API). Mayday now treats the CLI as the primary Greptile source.
 
 ## Auth
 
@@ -80,7 +80,7 @@ Settings, install the CLI (`npm i -g greptile`, it doubles as the bridge), and p
 agent (Claude Code / Codex / Conductor / Cursor / Devin) in Review Settings.
 
 For the demo this is the mirror image of Incident Mode, and worth saying out loud:
-Greptile dispatches *what to fix* to the agent; AFR answers *why the agent wrote it*.
+Greptile dispatches *what to fix* to the agent; Mayday answers *why the agent wrote it*.
 
 ## Credits
 

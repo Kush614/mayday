@@ -22,7 +22,7 @@
 
 ## Act 3 — Incident Mode (1:10–2:10) ← the core
 
-- Open AFR UI on the recorded trace. Paste the stack trace. Analyze.
+- Open Mayday UI on the recorded trace. Paste the stack trace. Analyze.
 - Timeline dims except two glowing steps. Forensics card:
   - **Step 12** wrote `items.ts:67` (`items: rows.map(toDTO)`).
   - **False assumption:** "Omitting `user_id` should return items across all users;
@@ -34,7 +34,7 @@
 
 ## Act 4 — Time travel (2:10–2:50)
 
-- Click **Re-run from step 12**. "AFR reconstructs the repo exactly as it was before
+- Click **Re-run from step 12**. "Mayday reconstructs the repo exactly as it was before
   step 14 and re-runs Codex — with the corrected assumption — in an isolated Modal
   sandbox."
 - Live status → green tests → new diff side-by-side with the old one.
@@ -43,7 +43,7 @@
 ## Close (2:50–3:00)
 
 > "Every agent session should leave a flight recording. Recording is free,
-> forensics are instant, and debugging becomes time travel. Agent Flight Recorder."
+> forensics are instant, and debugging becomes time travel. Mayday."
 
 ## Fallback branches (rehearse these!)
 
@@ -61,6 +61,6 @@
 - [ ] UI zoom level set for projector (125–150%), dark theme checked on projector
 - [ ] Timer: each act within ±5s of script
 - [ ] One-sentence answers ready for: "how is this different from logs?" (logs record
-      actions; AFR records *beliefs* and links them to outcomes), "does it work with
+      actions; Mayday records *beliefs* and links them to outcomes), "does it work with
       other agents?" (schema is agent-agnostic; Codex first), "what's the business?"
       (agent observability — the Datadog moment for agent-written code)

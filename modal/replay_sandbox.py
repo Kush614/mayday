@@ -36,12 +36,6 @@ sandbox_image = (
         "apt-get install -y nodejs",
         "npm install -g @openai/codex",
     )
-    .add_local_dir(
-        project_root / "demo" / "target-app",
-        WORK,
-        copy=True,
-        ignore=["node_modules", "data", "*.db*"],
-    )
 )
 
 # The driver function itself only needs fastapi for the web endpoint.
@@ -70,7 +64,10 @@ def _exec(sb, *cmd, timeout=420):
 @app.function(image=driver_image, secrets=[secret], timeout=1800)
 def replay(session_id: str, from_step: int, correction: str, files: dict, task: str, model: str = None):
     """
-    files: {relative_path: file_content} — the repo state as of step N-1.
+    files: {relative_path: file_content} — the ENTIRE app as of step N-1
+           (base checkout overlaid with the recorder's blobs). Nothing about a
+           given trace is baked into the image, so a new golden trace never
+           needs a redeploy.
     task:  the original session task, which we re-issue with the correction.
     """
     sb = modal.Sandbox.create(
@@ -83,7 +80,7 @@ def replay(session_id: str, from_step: int, correction: str, files: dict, task: 
     )
     steps = []
     try:
-        # 1. Rewind: overwrite the baked-in sources with the pre-step-N state.
+        # 1. Materialize the repo exactly as it stood before step N.
         for rel_path, content in (files or {}).items():
             target = f"{WORK}/{rel_path}"
             parent = target.rsplit("/", 1)[0]

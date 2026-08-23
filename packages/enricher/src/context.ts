@@ -1,4 +1,4 @@
-import type { TraceEvent } from "@afr/recorder/schema";
+import type { TraceEvent } from "@mayday/recorder/schema";
 
 const MAX_FIELD = 1800;
 

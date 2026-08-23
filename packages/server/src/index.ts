@@ -3,9 +3,9 @@ import express from "express";
 import cors from "cors";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { analyzeIncident, parseFailure, fromGreptileFinding, fetchGreptileFindings, runGreptileReview } from "@afr/incident";
-import { openIndex, indexTrace } from "@afr/enricher";
-import { listTraces, loadTrace, fileAtStep, indexPathFor, reconstructFiles, REPO_ROOT, TRACE_DIRS } from "./traces.js";
+import { analyzeIncident, parseFailure, fromGreptileFinding, fetchGreptileFindings, runGreptileReview } from "@mayday/incident";
+import { openIndex, indexTrace } from "@mayday/enricher";
+import { listTraces, loadTrace, fileAtStep, indexPathFor, appFilesAtStep, REPO_ROOT, TRACE_DIRS } from "./traces.js";
 
 const app = express();
 app.use(cors());
@@ -171,7 +171,7 @@ app.post("/api/replay", async (req, res) => {
 
   // Reconstruction happens here, where the blobs live — the sandbox just gets
   // the file contents, so a new trace never needs a Modal redeploy.
-  const files = reconstructFiles(session_id, loaded.events, Number(from_step));
+  const files = appFilesAtStep(session_id, loaded.events, Number(from_step), join(REPO_ROOT, "demo", "target-app"));
   const task = loaded.events.find((e) => e.type === "session_start")?.data.task ?? "";
 
   try {

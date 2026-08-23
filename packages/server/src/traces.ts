@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { parseTrace, type TraceEvent } from "@afr/recorder/schema";
-import { getBlob } from "@afr/recorder";
+import { parseTrace, type TraceEvent } from "@mayday/recorder/schema";
+import { getBlob } from "@mayday/recorder";
 
 export const REPO_ROOT = resolve(new URL("../../..", import.meta.url).pathname);
 
@@ -110,6 +110,42 @@ export function reconstructFiles(sessionId: string, events: TraceEvent[], before
   for (const [path, blob] of latest) {
     const content = getBlob(root, sessionId, blob);
     if (content !== null) files[path] = content;
+  }
+  return files;
+}
+
+const SANDBOX_SKIP = new Set(["node_modules", "data", ".git", "dist", "crash.txt", ".DS_Store"]);
+
+/**
+ * Every file of the target app as of step (beforeStep - 1): the checked-in app
+ * overlaid with the recorder's blobs. The Modal sandbox writes this map straight
+ * to disk, so the sandbox image stays generic (Node + Codex only) and a new
+ * trace never requires a redeploy.
+ */
+export function appFilesAtStep(sessionId: string, events: TraceEvent[], beforeStep: number, appDir: string): Record<string, string> {
+  const files: Record<string, string> = {};
+
+  const walk = (dir: string, prefix: string): void => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (SANDBOX_SKIP.has(entry.name)) continue;
+      const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+      const abs = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(abs, rel);
+        continue;
+      }
+      try {
+        files[rel] = readFileSync(abs, "utf8");
+      } catch {
+        // binary or unreadable files are not part of this demo app
+      }
+    }
+  };
+  if (existsSync(appDir)) walk(appDir, "");
+
+  // The agent's own edits win over the checked-in copy.
+  for (const [path, content] of Object.entries(reconstructFiles(sessionId, events, beforeStep))) {
+    files[path] = content;
   }
   return files;
 }

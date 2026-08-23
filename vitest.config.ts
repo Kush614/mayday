@@ -8,10 +8,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@afr/recorder/schema": resolve("packages/recorder/src/schema.ts"),
-      "@afr/recorder": resolve("packages/recorder/src/index.ts"),
-      "@afr/enricher": resolve("packages/enricher/src/index.ts"),
-      "@afr/incident": resolve("packages/incident/src/index.ts"),
+      "@mayday/recorder/schema": resolve("packages/recorder/src/schema.ts"),
+      "@mayday/recorder": resolve("packages/recorder/src/index.ts"),
+      "@mayday/enricher": resolve("packages/enricher/src/index.ts"),
+      "@mayday/incident": resolve("packages/incident/src/index.ts"),
     },
   },
 });

@@ -68,7 +68,7 @@ pins `python_version="3.11"`, so nothing depends on the system interpreter.
 INTEGRATIONS.md §3 and the kickoff prompt both say Greptile has "no CLI — GitHub App +
 dashboard only". That is no longer true: `npm i -g greptile` installs an official CLI
 (v3.4.1) whose `greptile review --json` reviews the **working branch** with no PR and no
-`GITHUB_TOKEN`. AFR now uses it as the primary Greptile source; the PR-comment path and a
+`GITHUB_TOKEN`. Mayday now uses it as the primary Greptile source; the PR-comment path and a
 saved finding remain as fallbacks. See `docs/greptile-notes.md`.
 
 ## Secret hygiene

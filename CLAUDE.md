@@ -1,9 +1,9 @@
-# Agent Flight Recorder (AFR)
+# Mayday
 
 A "black box" flight recorder for AI coding agents. Records every decision a Codex CLI
 session makes (tool calls, edits, reasoning, assumptions), enriches the trace with
 "why + alternatives + assumptions" annotations, and provides a replay UI with an
-Incident Mode: paste a stack trace / failing test / Greptile finding and AFR walks the
+Incident Mode: paste a stack trace / failing test / Greptile finding and Mayday walks the
 trace backward to the exact step and false assumption that caused it — then re-runs the
 agent from that step with a corrected assumption in a Modal sandbox.
 
@@ -13,7 +13,7 @@ both building this project AND as the recorded subject.
 ## Repo layout
 
 ```
-agent-flight-recorder/
+mayday/
 ├── CLAUDE.md                  # you are here
 ├── docs/
 │   ├── SPEC.md                # full product + technical spec (read before big changes)

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { unifiedDiff, diffLines, addedRanges, parseUnifiedDiff } from "@afr/recorder";
+import { unifiedDiff, diffLines, addedRanges, parseUnifiedDiff } from "@mayday/recorder";
 import { applyEdit, buildLineOrigin, PRE_EXISTING } from "../src/line-history.js";
-import type { TraceEvent } from "@afr/recorder/schema";
+import type { TraceEvent } from "@mayday/recorder/schema";
 
 function edit(step: number, path: string, before: string, after: string): TraceEvent {
   return {

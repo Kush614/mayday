@@ -5,7 +5,7 @@ Read from live docs 2026-08-23 (client 1.5.4). Source pages:
 [guide/sandbox-files](https://modal.com/docs/guide/sandbox-files),
 [guide/webhooks](https://modal.com/docs/guide/webhooks).
 
-## The API surface AFR uses
+## The API surface Mayday uses
 
 ### Create a sandbox
 
@@ -44,7 +44,7 @@ sb.filesystem.list_files("/work")
 sb.filesystem.remove("/work/tmp", recursive=True)
 ```
 
-Reads support files up to 5 GB; writes any size. **This is why AFR pushes the
+Reads support files up to 5 GB; writes any size. **This is why Mayday pushes the
 reconstructed state at runtime instead of baking traces into the image** — a new
 golden trace needs no redeploy.
 
@@ -87,7 +87,7 @@ modal.Image.debian_slim(python_version="3.11")
 `copy=True` bakes the files into the image layer (required if later build steps use
 them). Build it Saturday night so Sunday is a container pull, not an npm install.
 
-## AFR's design decision
+## Mayday's design decision
 
 Two images, on purpose:
 
