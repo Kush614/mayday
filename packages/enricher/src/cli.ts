@@ -7,6 +7,11 @@ import { enrichTrace } from "./enrich.js";
 import { costSoFar } from "./llm.js";
 import { openIndex, indexTrace } from "./db.js";
 
+/** npm -w runs with cwd set to the package dir; resolve user paths from where they typed. */
+function fromUserCwd(p: string): string {
+  return resolve(process.env.INIT_CWD ?? process.cwd(), p);
+}
+
 const args = process.argv.slice(2);
 const input = args.find((a) => !a.startsWith("--"));
 if (!input) {
@@ -21,10 +26,10 @@ function flag(name: string, fallback?: string): string | undefined {
   return inline ? inline.split("=")[1] : fallback;
 }
 
-const tracePath = resolve(input);
+const tracePath = fromUserCwd(input);
 const events = parseTrace(readFileSync(tracePath, "utf8"));
 const outPath = tracePath.replace(/(\.enriched)?\.jsonl$/, ".enriched.jsonl");
-const indexPath = resolve(flag("index", join(dirname(tracePath), "index.db"))!);
+const indexPath = fromUserCwd(flag("index", join(dirname(tracePath), "index.db"))!);
 
 console.log(`▶ enriching ${basename(tracePath)} — ${events.length} events`);
 

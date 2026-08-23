@@ -54,8 +54,11 @@ export function listTraces(): TraceSummary[] {
       golden: dir.includes(join("demo", "traces")),
       path: file,
     };
+    // Enrichment first, then the committed golden copy: the golden trace is the
+    // demo's safety net and must win over a live capture of the same session.
+    const rank = (t: TraceSummary) => (t.enriched ? 2 : 0) + (t.golden ? 1 : 0);
     const existing = bySession.get(summary.session_id);
-    if (!existing || (!existing.enriched && enriched)) bySession.set(summary.session_id, summary);
+    if (!existing || rank(summary) > rank(existing)) bySession.set(summary.session_id, summary);
   }
   return [...bySession.values()].sort((a, b) => b.started_at.localeCompare(a.started_at));
 }

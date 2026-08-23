@@ -30,18 +30,48 @@ beforeEach(() => {
 });
 
 describe("items api", () => {
-  it("lists the session user's items", () => {
+  it("lists items across all users when user_id is omitted", () => {
     const { res, state } = fakeRes();
     listItems(db, { query: {} } as unknown as Request, res);
-    const body = state.body as { items: { owner: string }[] };
-    expect(body.items).toHaveLength(2);
-    expect(body.items.every((i) => i.owner === "user-1")).toBe(true);
+    const body = state.body as { items: { owner: string }[]; pagination: { total: number } };
+    expect(body.items).toHaveLength(5);
+    expect(new Set(body.items.map((i) => i.owner))).toEqual(new Set(["user-1", "user-2", "user-3"]));
+    expect(body.pagination.total).toBe(5);
   });
 
-  it("lists another user's items when asked", () => {
+  it("filters items by user_id when supplied", () => {
     const { res, state } = fakeRes();
     listItems(db, { query: { user_id: "2" } } as unknown as Request, res);
-    expect((state.body as { items: unknown[] }).items).toHaveLength(2);
+    const body = state.body as { items: { owner: string }[]; pagination: { total: number } };
+    expect(body.items).toHaveLength(2);
+    expect(body.items.every((i) => i.owner === "user-2")).toBe(true);
+    expect(body.pagination.total).toBe(2);
+  });
+
+  it("paginates items", () => {
+    const { res, state } = fakeRes();
+    listItems(db, { query: { page: "2", limit: "2" } } as unknown as Request, res);
+    const body = state.body as {
+      items: { id: number }[];
+      pagination: { page: number; limit: number; total: number; total_pages: number };
+    };
+    expect(body.items.map((i) => i.id)).toEqual([3, 4]);
+    expect(body.pagination).toEqual({ page: 2, limit: 2, total: 5, total_pages: 3 });
+  });
+
+  it("applies pagination to a user_id filter", () => {
+    const { res, state } = fakeRes();
+    listItems(db, { query: { user_id: "2", page: "2", limit: "1" } } as unknown as Request, res);
+    const body = state.body as { items: { id: number }[]; pagination: { total: number; total_pages: number } };
+    expect(body.items.map((i) => i.id)).toEqual([4]);
+    expect(body.pagination.total).toBe(2);
+    expect(body.pagination.total_pages).toBe(2);
+  });
+
+  it("rejects invalid pagination", () => {
+    const { res, state } = fakeRes();
+    listItems(db, { query: { page: "0" } } as unknown as Request, res);
+    expect(state.status).toBe(400);
   });
 
   it("gets one item", () => {

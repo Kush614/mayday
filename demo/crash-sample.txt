@@ -1,0 +1,11 @@
+TypeError: Cannot read properties of null (reading 'toString')
+    at ownerCode (/Users/kush/Downloads/greptile/demo/target-app/src/owner.ts:6:22)
+    at toDTO (/Users/kush/Downloads/greptile/demo/target-app/src/items.ts:28:17)
+    at Array.map (<anonymous>)
+    at listItems (/Users/kush/Downloads/greptile/demo/target-app/src/items.ts:67:17)
+    at <anonymous> (/Users/kush/Downloads/greptile/demo/target-app/src/server.ts:11:35)
+    at Layer.handle [as handle_request] (/Users/kush/Downloads/greptile/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/kush/Downloads/greptile/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/Users/kush/Downloads/greptile/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/Users/kush/Downloads/greptile/node_modules/express/lib/router/layer.js:95:5)
+    at /Users/kush/Downloads/greptile/node_modules/express/lib/router/index.js:284:15

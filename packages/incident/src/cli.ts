@@ -8,6 +8,11 @@ import { parseFailure, fromGreptileFinding } from "./parse-failure.js";
 import { analyzeIncident } from "./analyze.js";
 import { fetchGreptileFindings, runGreptileReview } from "./greptile.js";
 
+/** npm -w runs with cwd set to the package dir; resolve user paths from where they typed. */
+function fromUserCwd(p: string): string {
+  return resolve(process.env.INIT_CWD ?? process.cwd(), p);
+}
+
 const args = process.argv.slice(2);
 function flag(name: string): string | undefined {
   const i = args.indexOf(`--${name}`);
@@ -28,9 +33,9 @@ if (!tracePath) {
   process.exit(1);
 }
 
-const resolvedTrace = resolve(tracePath);
+const resolvedTrace = fromUserCwd(tracePath);
 const events = parseTrace(readFileSync(resolvedTrace, "utf8"));
-const indexPath = resolve(flag("index") ?? join(dirname(resolvedTrace), "index.db"));
+const indexPath = fromUserCwd(flag("index") ?? join(dirname(resolvedTrace), "index.db"));
 
 let artifact;
 const errorFile = flag("error");
@@ -39,11 +44,11 @@ const greptileReview = args.includes("--greptile-review");
 const greptileFile = flag("greptile-file");
 
 if (errorFile) {
-  artifact = parseFailure(readFileSync(resolve(errorFile), "utf8"));
+  artifact = parseFailure(readFileSync(fromUserCwd(errorFile), "utf8"));
 } else if (greptileFile) {
-  artifact = fromGreptileFinding(JSON.parse(readFileSync(resolve(greptileFile), "utf8")));
+  artifact = fromGreptileFinding(JSON.parse(readFileSync(fromUserCwd(greptileFile), "utf8")));
 } else if (greptileReview) {
-  const cwd = resolve(flag("dir") ?? process.cwd());
+  const cwd = fromUserCwd(flag("dir") ?? ".");
   console.log(`  running \`greptile review --json\` in ${cwd} …`);
   const findings = await runGreptileReview({ cwd, ...(flag("branch") ? { branch: flag("branch")! } : {}) });
   if (findings.length === 0) throw new Error("greptile review returned no findings");

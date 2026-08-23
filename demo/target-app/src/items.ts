@@ -30,13 +30,48 @@ export function toDTO(row: ItemRow): ItemDTO {
   };
 }
 
-/** Session user for this demo service; real auth lands in a later milestone. */
-const CURRENT_USER_ID = 1;
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 20;
+const MAX_LIMIT = 100;
+
+function positiveInteger(value: unknown, fallback?: number): number | undefined {
+  if (value === undefined) return fallback;
+  if (typeof value !== "string" || !/^\d+$/.test(value)) return undefined;
+
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined;
+}
 
 export function listItems(db: Db, req: Request, res: Response): void {
-  const userId = Number(req.query.user_id ?? CURRENT_USER_ID);
-  const rows = db.prepare(`SELECT * FROM items WHERE user_id = ? ORDER BY id`).all(userId) as ItemRow[];
-  res.json({ items: rows.map(toDTO) });
+  const page = positiveInteger(req.query.page, DEFAULT_PAGE);
+  const limit = positiveInteger(req.query.limit, DEFAULT_LIMIT);
+  const userId = positiveInteger(req.query.user_id);
+
+  if (page === undefined || limit === undefined || limit > MAX_LIMIT) {
+    res.status(400).json({ error: `page and limit must be positive integers; limit cannot exceed ${MAX_LIMIT}` });
+    return;
+  }
+  if (req.query.user_id !== undefined && userId === undefined) {
+    res.status(400).json({ error: "user_id must be a positive integer" });
+    return;
+  }
+
+  const where = userId === undefined ? "" : " WHERE user_id = ?";
+  const filterParams = userId === undefined ? [] : [userId];
+  const { total } = db.prepare(`SELECT COUNT(*) AS total FROM items${where}`).get(...filterParams) as { total: number };
+  const rows = db
+    .prepare(`SELECT * FROM items${where} ORDER BY id LIMIT ? OFFSET ?`)
+    .all(...filterParams, limit, (page - 1) * limit) as ItemRow[];
+
+  res.json({
+    items: rows.map(toDTO),
+    pagination: {
+      page,
+      limit,
+      total,
+      total_pages: Math.ceil(total / limit),
+    },
+  });
 }
 
 export function getItem(db: Db, req: Request, res: Response): void {

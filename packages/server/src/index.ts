@@ -66,6 +66,22 @@ app.post("/api/traces/:id/index", (req, res) => {
   }
 });
 
+/**
+ * The SQLite index is a build artifact (gitignored), so a freshly cloned repo
+ * has the golden trace but no index. Build it on first use instead of failing.
+ */
+function ensureIndexed(sessionId: string, events: Parameters<typeof indexTrace>[1], tracePath: string): string {
+  const indexPath = indexPathFor(sessionId);
+  const db = openIndex(indexPath);
+  try {
+    const row = db.prepare(`SELECT session_id FROM sessions WHERE session_id = ?`).get(sessionId);
+    if (!row) indexTrace(db, events, tracePath);
+  } finally {
+    db.close();
+  }
+  return indexPath;
+}
+
 app.post("/api/incident", async (req, res) => {
   const { session_id, text, finding, model } = req.body ?? {};
   const loaded = session_id ? loadTrace(session_id) : null;
@@ -82,7 +98,7 @@ app.post("/api/incident", async (req, res) => {
     const result = await analyzeIncident({
       events: loaded.events,
       artifact,
-      indexPath: indexPathFor(session_id),
+      indexPath: ensureIndexed(session_id, loaded.events, loaded.summary.path),
       ...(model ? { model } : {}),
     });
     res.json(result);

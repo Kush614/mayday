@@ -14,6 +14,15 @@ import { join, resolve } from "node:path";
 
 const EXCLUDE = new Set([".git", "node_modules", "data", "dist", "crash.txt", ".DS_Store"]);
 
+/**
+ * Paths stripped from the copy after it lands. The production traffic simulator
+ * and the ops schema describe PRODUCTION, not the app: an agent that reads them
+ * learns the very fact the demo depends on it not knowing, and observed captures
+ * show it does read them. In a real shop these live with the SRE tooling.
+ */
+const STRIP = ["ops", "src/prod-sim.ts"];
+const STRIP_SCRIPTS = ["prod-sim"];
+
 function git(cwd: string, args: string[]): void {
   execFileSync("git", args, { cwd, stdio: "ignore" });
 }
@@ -47,6 +56,16 @@ export function prepareWorkspace(sourceDir: string, traceRoot: string, sessionId
     } catch {
       // a pre-existing link or a filesystem that refuses symlinks is not fatal
     }
+  }
+
+  for (const rel of STRIP) rmSync(join(dir, rel), { recursive: true, force: true });
+
+  // Leaving a script that points at a stripped file invites the agent to go looking.
+  const pkgPath = join(dir, "package.json");
+  if (existsSync(pkgPath)) {
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as { scripts?: Record<string, string> };
+    if (pkg.scripts) for (const name of STRIP_SCRIPTS) delete pkg.scripts[name];
+    writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf8");
   }
 
   writeFileSync(join(dir, ".gitignore"), "node_modules/\ndata/\ncrash.txt\n", "utf8");

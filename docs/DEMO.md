@@ -8,7 +8,7 @@
 
 ## Act 1 — Record (0:20–0:50)
 
-- Terminal: `npm run record -- "add pagination + per-user filtering to GET /items"`
+- Terminal: `npm run record -- "add pagination to GET /items and make the user_id filter optional, so that omitting user_id returns items across all users"`
 - Codex CLI runs live (or time-lapse if slow). Tests pass. "Great, ship it."
 - Cut to Greptile's PR review of the diff already posted (pre-opened PR):
   "Even our reviewer signed off... mostly." *(If Greptile flagged the bug, even
@@ -16,7 +16,7 @@
 
 ## Act 2 — Crash (0:50–1:10)
 
-- `npm run prod-sim` → guest-user request → stack trace: `items.ts:42 TypeError`.
+- `npm run prod-sim` → guest-cart request → `TypeError: Cannot read properties of null (reading 'toString')` at `owner.ts:6` ← `items.ts:67`.
 - "Prod is down. The agent wrote this three hours ago across 14 steps. Which step?
   And why?"
 
@@ -24,18 +24,17 @@
 
 - Open AFR UI on the recorded trace. Paste the stack trace. Analyze.
 - Timeline dims except two glowing steps. Forensics card:
-  - **Step 14** wrote `items.ts:42`.
-  - **False assumption:** "`user_id` is always non-null" — **based on step 9**, where
-    the agent read a *stale* schema file.
-  - Click the assumption chip → scrubber jumps to step 9, shows the exact file read
-    that poisoned the session.
+  - **Step 12** wrote `items.ts:67` (`items: rows.map(toDTO)`).
+  - **False assumption:** "Omitting `user_id` should return items across all users;
+    an empty WHERE clause correctly yields that behavior" — **based on step 9**.
+  - Click the assumption chip → scrubber jumps to step 9, the belief's origin.
 - "It's not just where the bug is. It's the belief that caused it, and where the
   belief came from. Greptile findings plug in here too — reviewer comment in,
   root-cause step out."
 
 ## Act 4 — Time travel (2:10–2:50)
 
-- Click **Re-run from step 14**. "AFR reconstructs the repo exactly as it was before
+- Click **Re-run from step 12**. "AFR reconstructs the repo exactly as it was before
   step 14 and re-runs Codex — with the corrected assumption — in an isolated Modal
   sandbox."
 - Live status → green tests → new diff side-by-side with the old one.
