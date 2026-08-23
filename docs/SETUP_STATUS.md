@@ -27,20 +27,31 @@ pins `python_version="3.11"`, so nothing depends on the system interpreter.
 | Tool | Version | Auth | Verified by |
 |---|---|---|---|
 | Codex CLI (`@openai/codex`) | 0.149.0 | ❌ `codex login status` → *Not logged in* | `codex --version`, `codex exec --help` |
-| Modal | client 1.5.4 | ❌ no `~/.modal.toml`, no profiles | `modal --version`, `modal profile list` |
-| Greptile CLI (`greptile`) | 3.4.1 | ❌ `greptile whoami` → *Not signed in* | `greptile --version`, `greptile review --help` |
+| Modal | client 1.5.4 | ✅ profile `kushise27`, token in `~/.modal.toml` | `modal run modal/hello.py` → *modal ok on x86_64* |
+| Greptile CLI (`greptile`) | 3.4.1 | ✅ `kushise27@gmail.com` (API key), org `Kush` | `greptile whoami` |
 | claude-mem | 13.15.3 | ✅ uses Claude Code's own auth | worker running, PID checked via `claude-mem status` |
 
-### Blocked on a human (browser / account)
+### Still blocked on a human
 
 1. `codex login` — browser flow. Alternative: `export OPENAI_API_KEY=…` then `codex login --api-key`.
-2. `modal setup` — browser flow, writes `~/.modal.toml`. Then:
-   `modal secret create openai-secret OPENAI_API_KEY=$OPENAI_API_KEY` (run in your own
-   shell so the key never enters an agent transcript).
-3. `greptile login` — browser, or `greptile login --api-key` (reads from stdin).
-4. claude-mem Pro: enter **FASTHACK30** at https://cmem.ai (30 days). Optional.
-5. Restart Claude Code once so claude-mem's hooks attach; memory injection begins on
+2. `OPENAI_API_KEY` — needed by the enricher and incident verdicts. Could be avoided
+   entirely by routing `llm.ts` through `codex exec --output-schema` (proposed, not built).
+3. `modal secret create openai-secret OPENAI_API_KEY=$OPENAI_API_KEY` — waits on (2).
+   Required before `modal deploy modal/replay_sandbox.py`.
+4. GitHub repo + Greptile GitHub App install — the CLI is authed, but `greptile review`
+   needs a remote to diff against.
+5. claude-mem Pro: enter **FASTHACK30** at https://cmem.ai (30 days). Optional.
+6. Restart Claude Code once so claude-mem's hooks attach; memory injection begins on
    the *second* session in a project.
+
+### Done
+
+- **Modal** — `modal setup` authorized 2026-08-23; workspace `kushise27`; verified with a
+  real remote execution (`modal run modal/hello.py`). Check the credit balance in the
+  dashboard.
+- **Greptile** — signed in with an API key stored in the CLI's own credential store (not
+  in `.env`, not in any repo file). Org `Kush`.
+  ⚠️ That key was pasted into a chat transcript — rotate it after the hackathon.
 
 ### Credits
 
