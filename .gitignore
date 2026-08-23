@@ -1,0 +1,9 @@
+node_modules/
+dist/
+traces/
+*.db
+.env
+.env.local
+.DS_Store
+demo/target-app/data/
+__pycache__/

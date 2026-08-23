@@ -1,0 +1,14 @@
+{
+  "name": "@afr/target-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/server.ts",
+    "test": "vitest run",
+    "prod-sim": "tsx src/prod-sim.ts",
+    "seed": "tsx src/seed.ts"
+  },
+  "dependencies": { "better-sqlite3": "^11.7.0", "express": "^4.21.2" },
+  "devDependencies": { "@types/better-sqlite3": "^7.6.12", "@types/express": "^4.17.21" }
+}

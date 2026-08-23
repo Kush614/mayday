@@ -1,0 +1,15 @@
+{
+  "name": "@afr/incident",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "start": "tsx src/cli.ts", "build": "tsc -p tsconfig.json" },
+  "dependencies": {
+    "@afr/enricher": "*",
+    "@afr/recorder": "*",
+    "better-sqlite3": "^11.7.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": { "@types/better-sqlite3": "^7.6.12" }
+}

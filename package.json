@@ -1,0 +1,35 @@
+{
+  "name": "agent-flight-recorder",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "packages/recorder",
+    "packages/enricher",
+    "packages/incident",
+    "packages/server",
+    "packages/ui",
+    "demo/target-app"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev": "concurrently -n api,ui -c cyan,magenta \"npm -w @afr/server run dev\" \"npm -w @afr/ui run dev\"",
+    "record": "npm -w @afr/recorder run start --",
+    "enrich": "npm -w @afr/enricher run start --",
+    "incident": "npm -w @afr/incident run start --",
+    "prod-sim": "npm -w @afr/target-app run prod-sim",
+    "test": "vitest run",
+    "typecheck": "tsc -b packages/recorder packages/enricher packages/incident packages/server"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "concurrently": "^9.1.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.4.3",
+    "vitest": "^3.0.5"
+  }
+}
