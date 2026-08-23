@@ -69,11 +69,21 @@ await page.locator("textarea").fill(crash);
 await page.locator("button:has-text('Analyze')").click();
 await page.waitForSelector("text=/forensics/i", { timeout: 120_000 });
 await page.waitForTimeout(1500);
-const verdict = await page.locator("text=/false assumption/i").count();
+const verdict = await page.locator("text=/what the agent believed/i").count();
 record("incident analysis renders forensics card", verdict > 0);
 await page.screenshot({ path: `${OUT}/05-forensics.png`, fullPage: false });
 
-// 6. Timeline dims to the incident chain.
+// 6. The before/after belief pair is on screen, not below the fold.
+const beforeBox = await page.locator("text=/what the agent believed/i").first().boundingBox();
+const afterBox = await page.locator("text=/what is actually true/i").first().boundingBox();
+const vh = page.viewportSize()?.height ?? 0;
+record(
+  "before/after belief visible without scrolling",
+  Boolean(beforeBox && afterBox && beforeBox.y < vh && afterBox.y < vh),
+  `before y=${beforeBox?.y?.toFixed(0)} after y=${afterBox?.y?.toFixed(0)} viewport=${vh}`,
+);
+
+// 7. Timeline dims to the incident chain.
 const dimmed = await page.locator("button[title^='step'].opacity-20").count();
 record("timeline dims to the incident chain", dimmed > 5, `${dimmed} steps dimmed`);
 await page.screenshot({ path: `${OUT}/06-chain.png` });

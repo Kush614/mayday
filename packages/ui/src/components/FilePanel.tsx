@@ -66,7 +66,7 @@ export function FilePanel({
   const highlights = selected ? highlightedLines(events, step, selected) : new Set<number>();
 
   return (
-    <div className="flex h-full flex-col border-r-2 border-edge bg-panel">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden border-r-2 border-edge bg-panel">
       <div className="border-b-2 border-edge px-4 py-3">
         <div className="mb-2 text-[11px] font-black uppercase tracking-widest text-muted">files touched</div>
         <div className="space-y-1">

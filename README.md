@@ -68,6 +68,13 @@ incident → step 12 · basis step 9 · high confidence · $0.03
 re-run   → Modal sandbox · tests + prod-sim green · 67s
 ```
 
+**Before and after, straight off the forensics card:**
+
+| | |
+|---|---|
+| ❌ **What the agent believed** | *Omitting `user_id` should return items across all users; using an empty WHERE clause correctly yields that behavior.* — formed at step 9 |
+| ✅ **What is actually true** | *Omitting `user_id` must default to filtering by the current demo user rather than returning items across all users.* — verified by the sandbox re-run |
+
 **The verdict, verbatim from the incident engine:**
 
 > The agent assumed that omitting `user_id` and dropping the WHERE clause would safely return all
@@ -77,8 +84,12 @@ re-run   → Modal sandbox · tests + prod-sim green · 67s
 **The fix Codex wrote when handed that correction, in a sandbox, unattended:**
 
 ```diff
+-  const userId = Number(req.query.user_id ?? CURRENT_USER_ID);
 -  const rows = db.prepare(`SELECT * FROM items WHERE user_id = ? ORDER BY id`).all(userId)
-+  const where = hasUserId ? "user_id = ?" : "user_id IS NOT NULL";
++  const effectiveUserId = userId ?? CURRENT_USER_ID;
++  const rows = db
++    .prepare(`SELECT * FROM items WHERE user_id = ? ORDER BY id LIMIT ? OFFSET ?`)
++    .all(effectiveUserId, limit, offset) as ItemRow[];
 ```
 
 ---
@@ -93,8 +104,11 @@ re-run   → Modal sandbox · tests + prod-sim green · 67s
 |---|---|
 | ![Dark](docs/screenshots/dark-02-step-and-assumptions.png) | ![Re-run](docs/screenshots/light-05-sandbox-rerun.png) |
 
-There is an **About** page inside the app too, with animated diagrams explaining the pipeline and the
-sponsor integrations.
+The app has two more tabs: **About**, with animated diagrams explaining the pipeline and the sponsor
+integrations, and **Demo** — the full run-of-show with copy buttons and one-click actions that drive
+the app, so the presenter never has to remember where to click.
+
+![Demo guide](docs/screenshots/light-06-demo-guide.png)
 
 ---
 

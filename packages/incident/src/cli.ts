@@ -3,7 +3,7 @@ import "dotenv/config";
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname, join } from "node:path";
 import { parseTrace } from "@mayday/recorder/schema";
-import { costSoFar } from "@mayday/enricher";
+import { costSoFar, openIndex, indexTrace } from "@mayday/enricher";
 import { parseFailure, fromGreptileFinding } from "./parse-failure.js";
 import { analyzeIncident } from "./analyze.js";
 import { fetchGreptileFindings, runGreptileReview } from "./greptile.js";
@@ -36,6 +36,22 @@ if (!tracePath) {
 const resolvedTrace = fromUserCwd(tracePath);
 const events = parseTrace(readFileSync(resolvedTrace, "utf8"));
 const indexPath = fromUserCwd(flag("index") ?? join(dirname(resolvedTrace), "index.db"));
+
+// The index is a build artefact, so a trace copied elsewhere (the committed
+// golden trace, a colleague's clone) has no index beside it. Build it rather
+// than reporting "no step wrote that line", which looks like a real answer.
+{
+  const db = openIndex(indexPath);
+  try {
+    const known = db.prepare(`SELECT session_id FROM sessions WHERE session_id = ?`).get(events[0]!.session_id);
+    if (!known) {
+      indexTrace(db, events, resolvedTrace);
+      console.log(`  built index for this trace at ${indexPath}`);
+    }
+  } finally {
+    db.close();
+  }
+}
 
 let artifact;
 const errorFile = flag("error");
@@ -75,7 +91,7 @@ console.log(`▶ incident analysis — ${artifact.kind}, ${artifact.frames.lengt
 
 try {
   const result = await analyzeIncident({ events, artifact, indexPath, ...(flag("model") ? { model: flag("model")! } : {}) });
-  const outPath = flag("out") ?? join(dirname(resolvedTrace), `${events[0]!.session_id}.incident.json`);
+  const outPath = fromUserCwd(flag("out") ?? join(dirname(resolvedTrace), `${events[0]!.session_id}.incident.json`));
   writeFileSync(outPath, JSON.stringify(result, null, 2), "utf8");
 
   console.log(`\n╭─ FORENSICS ────────────────────────────────────────────`);

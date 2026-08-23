@@ -105,7 +105,7 @@ export function StepCard({
   const faultyAssumptionId = incident?.step === event.step ? incident.assumption?.id : undefined;
 
   return (
-    <div className="flex h-full flex-col overflow-auto bg-ink">
+    <div className="flex min-h-0 flex-col overflow-auto bg-ink">
       <div className="border-b-2 border-edge bg-panel px-5 py-4">
         <div className="flex items-center gap-3">
           <span className="border-2 border-edge bg-raised px-2 py-0.5 font-mono text-xs font-bold shadow-hard-sm">step {event.step}</span>

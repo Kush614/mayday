@@ -12,12 +12,14 @@ export function IncidentOverlay({
   sessionId,
   onClose,
   onResult,
+  initialText = "",
 }: {
   sessionId: string;
   onClose: () => void;
   onResult: (r: IncidentResult) => void;
+  initialText?: string;
 }) {
-  const [text, setText] = useState("");
+  const [text, setText] = useState(initialText);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);

@@ -55,6 +55,7 @@ export type IncidentResult = {
   basis_step: number | null;
   basis_summary: string | null;
   verdict: string;
+  corrected_belief?: string;
   correction: string;
   confidence: string;
   candidates: Candidate[];

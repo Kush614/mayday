@@ -72,9 +72,30 @@ export function Forensics({
         </div>
 
         {incident.assumption && (
-          <div className="border-2 border-edge bg-danger px-3 py-2 shadow-hard-sm">
-            <div className="text-[10px] font-black uppercase tracking-widest text-white/80">false assumption</div>
-            <div className="mt-1 font-bold text-white">{incident.assumption.claim}</div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="border-2 border-edge bg-danger px-3 py-2 shadow-hard-sm">
+              <div className="flex items-center gap-2">
+                <span className="border-2 border-edge bg-white px-1.5 text-[10px] font-black text-danger">BEFORE</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-white/80">what the agent believed</span>
+              </div>
+              <div className="mt-1.5 font-bold text-white line-through decoration-white/50 decoration-2">
+                {incident.assumption.claim}
+              </div>
+              <div className="mt-1.5 text-[10px] font-bold text-white/75">
+                formed at step {incident.basis_step ?? "?"} · {incident.assumption.confidence}
+              </div>
+            </div>
+
+            <div className="border-2 border-edge bg-ok px-3 py-2 shadow-hard-sm">
+              <div className="flex items-center gap-2">
+                <span className="border-2 border-edge bg-white px-1.5 text-[10px] font-black text-black">AFTER</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-black/70">what is actually true</span>
+              </div>
+              <div className="mt-1.5 font-bold text-black">
+                {incident.corrected_belief?.trim() || incident.correction.split(/(?<=\.)\s/)[0]}
+              </div>
+              <div className="mt-1.5 text-[10px] font-bold text-black/70">verified by the sandbox re-run</div>
+            </div>
           </div>
         )}
 

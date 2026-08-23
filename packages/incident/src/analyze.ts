@@ -60,6 +60,8 @@ export function rankCandidates(db: Db, sessionId: string, artifact: FailureArtif
 const Verdict = z.object({
   assumption_id: z.string().nullable(),
   verdict: z.string(),
+  /** One sentence of ground truth that replaces the false belief. */
+  corrected_belief: z.string().default(""),
   suggested_correction: z.string(),
   confidence: z.enum(["low", "medium", "high"]).default("medium"),
 });
@@ -73,14 +75,19 @@ Decide which single assumption is most likely FALSE and caused this failure.
 - assumption_id: the id of that assumption, or null if none of them explain it.
 - verdict: two or three sentences — what the agent believed, what is actually
   true, and how that produced this exact failure. Reference concrete symbols.
+- corrected_belief: ONE sentence stating what is actually true, written to stand
+  directly against the false assumption — same subject, corrected claim. No
+  preamble, no instruction, just the true statement about the system.
 - suggested_correction: ONE paragraph written as an instruction to the agent for
   a re-run: state the corrected fact and what the code must do instead. It will
   be appended to the original task, so make it self-contained and imperative.
 - confidence: how strongly the evidence supports this attribution.
-Return JSON with exactly these four keys.`;
+Return JSON with exactly these five keys.`;
 
 export type IncidentResult = {
   failure: { kind: string; message: string; text: string };
+  /** The belief as recorded (false) and the ground truth that replaces it. */
+  corrected_belief: string;
   session_id: string;
   step: number;
   step_summary: string;
@@ -126,6 +133,7 @@ export async function analyzeIncident(opts: {
       verdict = {
         assumption_id: null,
         verdict: `Step ${top.step} ${top.reason}, but it has no recorded assumptions (enrichment missing or empty), so no belief can be blamed.`,
+        corrected_belief: "",
         suggested_correction: `Re-examine ${top.path} around line ${top.line} for the failure: ${artifact.message}`,
         confidence: "low",
       };
@@ -165,6 +173,7 @@ export async function analyzeIncident(opts: {
       basis_step: basisStep,
       basis_summary: basisEvent ? summarizeEvent(basisEvent) : null,
       verdict: verdict.verdict,
+      corrected_belief: verdict.corrected_belief,
       correction: verdict.suggested_correction,
       confidence: verdict.confidence,
       candidates,

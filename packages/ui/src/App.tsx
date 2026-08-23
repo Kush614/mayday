@@ -6,6 +6,7 @@ import { StepCard } from "./components/StepCard";
 import { IncidentOverlay } from "./components/IncidentOverlay";
 import { Forensics } from "./components/Forensics";
 import { About } from "./components/About";
+import { DemoGuide } from "./components/DemoGuide";
 import type { IncidentResult, TraceEvent, TraceSummary } from "./types";
 
 type Theme = "light" | "dark";
@@ -35,7 +36,8 @@ export default function App() {
   const [showIncident, setShowIncident] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [theme, toggleTheme] = useTheme();
-  const [tab, setTab] = useState<"replay" | "about">("replay");
+  const [tab, setTab] = useState<"replay" | "demo" | "about">("replay");
+  const [incidentPrefill, setIncidentPrefill] = useState("");
 
   useEffect(() => {
     api
@@ -110,7 +112,7 @@ export default function App() {
         </div>
 
         <div className="flex border-2 border-edge shadow-hard-sm">
-          {(["replay", "about"] as const).map((t) => (
+          {(["replay", "demo", "about"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -171,6 +173,18 @@ export default function App() {
 
       {tab === "about" ? (
         <About />
+      ) : tab === "demo" ? (
+        <DemoGuide
+          onJumpToStep={(step) => {
+            setTab("replay");
+            goto(step);
+          }}
+          onOpenIncident={(prefill) => {
+            setIncidentPrefill(prefill);
+            setTab("replay");
+            setShowIncident(true);
+          }}
+        />
       ) : events.length === 0 ? (
         <div className="grid flex-1 place-items-center text-center text-sm text-muted">
           <div className="space-y-2">
@@ -181,14 +195,14 @@ export default function App() {
       ) : (
         <>
           <Timeline events={events} current={step} onSelect={goto} incident={incident} />
-          <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] overflow-hidden">
             <FilePanel sessionId={sessionId!} events={events} step={step} focusLine={focusLine} />
-            <div className="flex min-h-0 flex-col">
+            <div className="flex h-full min-h-0 flex-col overflow-hidden">
               <div className="min-h-0 flex-1 overflow-auto">{current && <StepCard event={current} onJump={goto} incident={incident} />}</div>
               {incident && (
                 // Capped so the forensics card is always on screen the moment
                 // an analysis lands — it is the payoff, not a footnote.
-                <div className="max-h-[52%] min-h-0 shrink-0 overflow-auto">
+                <div className="max-h-[48vh] min-h-0 shrink-0 overflow-auto">
                   <Forensics incident={incident} onJump={goto} onClear={() => setIncident(null)} />
                 </div>
               )}
@@ -200,6 +214,7 @@ export default function App() {
       {showIncident && sessionId && (
         <IncidentOverlay
           sessionId={sessionId}
+          initialText={incidentPrefill}
           onClose={() => setShowIncident(false)}
           onResult={(r) => {
             setIncident(r);
