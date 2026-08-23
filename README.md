@@ -62,6 +62,9 @@ actually wrote that line — not the step that happened to touch the file.
 - **Greptile** — reviews every PR here, and its findings are a *pre-production incident
   artifact*: `{path, line_range, comment}` goes straight into Incident Mode.
   Greptile says **what** is wrong with the diff; AFR says **why the agent wrote it**.
+  Primary path is the CLI (`npm i -g greptile && greptile login`), so a review of the
+  working branch feeds Incident Mode with no PR and no GitHub token:
+  `npm run incident -- traces/<id>.enriched.jsonl --greptile-review`
 - **claude-mem** — build-time memory across sessions.
 
 ## Status
@@ -78,7 +81,7 @@ Needs credentials to run (`.env`): recording (`codex` + `OPENAI_API_KEY`), enric
 incident verdicts (`OPENAI_API_KEY`), sandbox re-runs (`modal setup` +
 `modal secret create openai-secret OPENAI_API_KEY=…`, then
 `modal deploy modal/replay_sandbox.py` and put the URL in `AFR_MODAL_ENDPOINT`),
-live Greptile import (`GITHUB_TOKEN`, `GITHUB_REPO`).
+live Greptile import (`greptile login`; `GITHUB_TOKEN` + `GITHUB_REPO` only for the PR-comment fallback).
 
 Fail-soft everywhere: no enrichment still renders the raw trace, no Modal still prints
 the exact local command, no Greptile API still loads a saved finding.

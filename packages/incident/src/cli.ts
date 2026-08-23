@@ -6,7 +6,7 @@ import { parseTrace } from "@afr/recorder/schema";
 import { costSoFar } from "@afr/enricher";
 import { parseFailure, fromGreptileFinding } from "./parse-failure.js";
 import { analyzeIncident } from "./analyze.js";
-import { fetchGreptileFindings } from "./greptile.js";
+import { fetchGreptileFindings, runGreptileReview } from "./greptile.js";
 
 const args = process.argv.slice(2);
 function flag(name: string): string | undefined {
@@ -21,6 +21,7 @@ if (!tracePath) {
   console.error(
     `usage:\n` +
       `  npm run incident -- traces/<id>.enriched.jsonl --error err.txt\n` +
+      `  npm run incident -- traces/<id>.enriched.jsonl --greptile-review [--dir demo/target-app]\n` +
       `  npm run incident -- traces/<id>.enriched.jsonl --greptile-pr 3 [--repo owner/name]\n` +
       `  npm run incident -- traces/<id>.enriched.jsonl --greptile-file finding.json`,
   );
@@ -34,12 +35,20 @@ const indexPath = resolve(flag("index") ?? join(dirname(resolvedTrace), "index.d
 let artifact;
 const errorFile = flag("error");
 const greptilePr = flag("greptile-pr");
+const greptileReview = args.includes("--greptile-review");
 const greptileFile = flag("greptile-file");
 
 if (errorFile) {
   artifact = parseFailure(readFileSync(resolve(errorFile), "utf8"));
 } else if (greptileFile) {
   artifact = fromGreptileFinding(JSON.parse(readFileSync(resolve(greptileFile), "utf8")));
+} else if (greptileReview) {
+  const cwd = resolve(flag("dir") ?? process.cwd());
+  console.log(`  running \`greptile review --json\` in ${cwd} …`);
+  const findings = await runGreptileReview({ cwd, ...(flag("branch") ? { branch: flag("branch")! } : {}) });
+  if (findings.length === 0) throw new Error("greptile review returned no findings");
+  console.log(`  using finding: ${findings[0]!.path}:${findings[0]!.line_range.join("-")}`);
+  artifact = fromGreptileFinding(findings[0]!);
 } else if (greptilePr) {
   const repo = flag("repo") ?? process.env.GITHUB_REPO;
   if (!repo) throw new Error("--repo owner/name (or GITHUB_REPO) is required with --greptile-pr");

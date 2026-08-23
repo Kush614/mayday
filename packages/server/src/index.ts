@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { analyzeIncident, parseFailure, fromGreptileFinding, fetchGreptileFindings } from "@afr/incident";
+import { analyzeIncident, parseFailure, fromGreptileFinding, fetchGreptileFindings, runGreptileReview } from "@afr/incident";
 import { openIndex, indexTrace } from "@afr/enricher";
 import { listTraces, loadTrace, fileAtStep, indexPathFor, REPO_ROOT, TRACE_DIRS } from "./traces.js";
 
@@ -94,26 +94,47 @@ app.post("/api/incident", async (req, res) => {
 app.get("/api/greptile", async (req, res) => {
   const pr = Number(req.query.pr ?? 0);
   const repo = String(req.query.repo ?? process.env.GITHUB_REPO ?? "");
-  // Saved findings work offline and are still a truthful demo (INTEGRATIONS §3b).
   const saved = join(REPO_ROOT, "demo", "greptile-finding.json");
-  if (!pr || !repo) {
-    if (existsSync(saved)) {
-      res.json({ source: "saved", findings: [JSON.parse(readFileSync(saved, "utf8"))] });
-      return;
+  const attempts: string[] = [];
+
+  // 1. Native CLI review of the target app's branch — no PR needed.
+  if (req.query.source !== "github" && req.query.source !== "saved") {
+    try {
+      const findings = await runGreptileReview({ cwd: join(REPO_ROOT, "demo", "target-app") });
+      if (findings.length > 0) {
+        res.json({ source: "cli", findings });
+        return;
+      }
+      attempts.push("greptile CLI returned no findings");
+    } catch (err) {
+      attempts.push((err as Error).message);
     }
-    res.status(400).json({ error: "pass ?pr=<n>&repo=owner/name, or save demo/greptile-finding.json" });
+  }
+
+  // 2. Greptile's review comments on a PR.
+  if (pr && repo && req.query.source !== "saved") {
+    try {
+      const findings = await fetchGreptileFindings({ repo, pr });
+      if (findings.length > 0) {
+        res.json({ source: "github", findings });
+        return;
+      }
+      attempts.push(`no Greptile comments on ${repo}#${pr}`);
+    } catch (err) {
+      attempts.push((err as Error).message);
+    }
+  }
+
+  // 3. A saved finding still tells a true story offline (INTEGRATIONS §3b).
+  if (existsSync(saved)) {
+    res.json({ source: "saved", warning: attempts.join("; ") || undefined, findings: [JSON.parse(readFileSync(saved, "utf8"))] });
     return;
   }
-  try {
-    const findings = await fetchGreptileFindings({ repo, pr });
-    res.json({ source: "github", findings });
-  } catch (err) {
-    if (existsSync(saved)) {
-      res.json({ source: "saved", warning: (err as Error).message, findings: [JSON.parse(readFileSync(saved, "utf8"))] });
-      return;
-    }
-    res.status(502).json({ error: (err as Error).message });
-  }
+
+  res.status(502).json({
+    error: attempts.join("; ") || "no Greptile source available",
+    hint: "sign in with `greptile login`, pass ?pr=<n>&repo=owner/name, or save demo/greptile-finding.json",
+  });
 });
 
 /** Sandboxed re-run. Fail soft: hand back the exact local command if Modal is down. */
