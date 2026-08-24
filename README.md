@@ -68,12 +68,49 @@ incident → step 12 · basis step 9 · high confidence · $0.03
 re-run   → Modal sandbox · tests + prod-sim green · 67s
 ```
 
-**Before and after, straight off the forensics card:**
+---
 
-| | |
-|---|---|
-| ❌ **What the agent believed** | *Omitting `user_id` should return items across all users; using an empty WHERE clause correctly yields that behavior.* — formed at step 9 |
-| ✅ **What is actually true** | *Omitting `user_id` must default to filtering by the current demo user rather than returning items across all users.* — verified by the sandbox re-run |
+## The before and after belief
+
+This is the screen the whole project exists to produce.
+
+<div align="center">
+
+![The false belief, struck through, next to the ground truth that replaces it](docs/media/belief.gif)
+
+</div>
+
+A stack trace goes in. What comes out is not a line number — it is a **pair of beliefs**.
+
+**❌ BEFORE — what the agent believed.** Struck through in red, with the step where the belief was
+formed:
+
+> *Omitting `user_id` should return items across all users; using an empty WHERE clause (i.e., no
+> WHERE) correctly yields that behavior.* — formed at step 9, `stated`
+
+That sentence is not a guess about the agent. It was extracted from the session at record time, from
+the agent's own reasoning, and stored with a `basis_step` pointing at where the belief came from. It
+was *reasonable*: every local signal — `schema.sql`, the migrations, the dev database — said
+`user_id` was `NOT NULL`.
+
+**✅ AFTER — what is actually true.** In green, written to stand directly against the false claim:
+
+> *Omitting `user_id` must default to filtering by the current demo user rather than returning items
+> across all users.* — verified by the sandbox re-run
+
+Above the pair sits the chain — `step 9 · belief formed here → step 12 · wrote the failing line →
+src/items.ts:67` — and each link is clickable. Clicking the yellow chip jumps the scrubber to step 9
+and shows the exact moment the wrong idea entered the session.
+
+That "verified by the sandbox re-run" line is load-bearing: the corrected belief is not just an
+assertion, it is turned into an instruction, handed back to Codex in an isolated sandbox, and the
+resulting code is run against the unit tests **and** real production traffic before this label appears.
+
+> **This is the difference between a stack trace and a post-mortem.** A stack trace tells you which
+> line threw. The before/after pair tells you what the agent thought was true, why that was a
+> defensible thing to think, and what it should have believed instead.
+
+---
 
 **The verdict, verbatim from the incident engine:**
 
