@@ -1,5 +1,7 @@
 /**
- * docs/media/belief.gif — the before/after belief, close up.
+ * The before/after belief, close up:
+ *   docs/screenshots/belief-before-after.png  — the still used in the README
+ *   docs/media/belief.gif                     — the same crop, animated
  *
  * Runs the real interaction (paste → analyze → follow the chain) and captures a
  * fixed crop of the forensics card, so the two panels fill the frame instead of
@@ -54,7 +56,7 @@ function encode(frames: Frame[], out: string, delays: number[]) {
 const browser = await chromium.launch();
 
 // ── Pass 1: measure where the forensics card lands ─────────────────────────
-const probe = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+const probe = await browser.newPage({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 2 });
 await probe.goto(BASE, { waitUntil: "networkidle" });
 await probe.waitForTimeout(600);
 await analyze(probe);

@@ -76,7 +76,7 @@ This is the screen the whole project exists to produce.
 
 <div align="center">
 
-![The false belief, struck through, next to the ground truth that replaces it](docs/media/belief.gif)
+![The false belief, struck through, next to the ground truth that replaces it](docs/screenshots/belief-before-after.png)
 
 </div>
 
